@@ -25,9 +25,18 @@ export default function FreshApp() {
   useEffect(() => {
     const savedView = localStorage.getItem('fresh_view');
     const savedLang = localStorage.getItem('fresh_lang');
+    const savedProfile = localStorage.getItem('fresh_user_profile');
     
-    if (savedView) setView(savedView as any);
     if (savedLang) setLanguage(savedLang as any);
+    
+    // Logic for returning users: If they have a profile, go straight to the Map view
+    if (savedProfile) {
+      setView('contractor-dash');
+    } else if (savedView) {
+      setView(savedView as any);
+    } else {
+      setView('landing');
+    }
     
     setIsHydrated(true);
   }, []);
@@ -41,7 +50,7 @@ export default function FreshApp() {
 
   const handleIntroComplete = () => {
     setShowIntro(false);
-    localStorage.setItem('fresh_seen_intro', 'true');
+    // Note: We don't save intro status anymore because user wants it to show every time
   };
 
   if (!isHydrated) {
