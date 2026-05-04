@@ -1,0 +1,597 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a generic user profile containing common information for all roles (Tree Owner, Contractor, Buyer). This entity is assumed to work with an external authentication system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The full name of the user."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The user's contact phone number, used for WhatsApp verification and notifications."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address, primarily for general communications.",
+          "format": "email"
+        },
+        "address": {
+          "type": "string",
+          "description": "The full physical address of the user."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "The geographical latitude coordinate of the user's primary location."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "The geographical longitude coordinate of the user's primary location."
+        },
+        "userRole": {
+          "type": "string",
+          "description": "The primary role of the user within the application (e.g., TreeOwner, Contractor, Buyer).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the user profile was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the user profile was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "phoneNumber",
+        "address",
+        "latitude",
+        "longitude",
+        "userRole",
+        "createdAt"
+      ]
+    },
+    "TreeOwnerProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TreeOwnerProfile",
+      "type": "object",
+      "description": "Contains specific details and settings for a Tree Owner, linking to their generic user profile.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the TreeOwnerProfile entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile associated with this tree owner. (Relationship: UserProfile 1:1 TreeOwnerProfile)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the tree owner profile was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the tree owner profile was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "createdAt"
+      ]
+    },
+    "ContractorProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ContractorProfile",
+      "type": "object",
+      "description": "Holds detailed information and verification status for a Contractor, linking to their generic user profile.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ContractorProfile entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile associated with this contractor. (Relationship: UserProfile 1:1 ContractorProfile)"
+        },
+        "teamSize": {
+          "type": "number",
+          "description": "The number of members in the contractor's harvesting team."
+        },
+        "yearsOfExperience": {
+          "type": "number",
+          "description": "The number of years the contractor has been active in harvesting services."
+        },
+        "serviceAreaRadiusKm": {
+          "type": "number",
+          "description": "The maximum radius in kilometers from the contractor's location that they are willing to serve."
+        },
+        "equipment": {
+          "type": "array",
+          "description": "A list of specialized equipment the contractor possesses (e.g., Ladders, Safety gear, Transport vehicle).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "idProofUrl": {
+          "type": "string",
+          "description": "URL to an uploaded image of the contractor's identification proof (e.g., Aadhaar, Driver's License)."
+        },
+        "bankAccountName": {
+          "type": "string",
+          "description": "The name of the bank account holder for payment processing."
+        },
+        "bankAccountNumber": {
+          "type": "string",
+          "description": "The bank account number for payment processing."
+        },
+        "bankIfscCode": {
+          "type": "string",
+          "description": "The Indian Financial System Code (IFSC) for the bank account."
+        },
+        "isVerified": {
+          "type": "boolean",
+          "description": "Indicates whether the contractor's profile and details have been manually verified by Fresh staff."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the contractor profile was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the contractor profile was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "teamSize",
+        "yearsOfExperience",
+        "serviceAreaRadiusKm",
+        "equipment",
+        "idProofUrl",
+        "bankAccountName",
+        "bankAccountNumber",
+        "bankIfscCode",
+        "isVerified",
+        "createdAt"
+      ]
+    },
+    "BuyerProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "BuyerProfile",
+      "type": "object",
+      "description": "Stores specific information for a Buyer, linking to their generic user profile. This entity is part of future phases.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the BuyerProfile entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile associated with this buyer. (Relationship: UserProfile 1:1 BuyerProfile)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the buyer profile was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the buyer profile was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "createdAt"
+      ]
+    },
+    "TreeListing": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TreeListing",
+      "type": "object",
+      "description": "Details about a specific fruit tree listed for harvest by a Tree Owner.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the TreeListing entity."
+        },
+        "treeOwnerProfileId": {
+          "type": "string",
+          "description": "Reference to the TreeOwnerProfile who listed this tree. (Relationship: TreeOwnerProfile 1:N TreeListing)"
+        },
+        "latitude": {
+          "type": "number",
+          "description": "The geographical latitude coordinate of the tree's location."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "The geographical longitude coordinate of the tree's location."
+        },
+        "address": {
+          "type": "string",
+          "description": "The full address where the tree is located."
+        },
+        "treeType": {
+          "type": "string",
+          "description": "The specific type of fruit tree (e.g., Alphonso, Priyoor, Neelum, Mulgoba, Other)."
+        },
+        "estimatedQuantityKg": {
+          "type": "number",
+          "description": "The estimated quantity of fruit available for harvest from the tree, in kilograms."
+        },
+        "photoUrls": {
+          "type": "array",
+          "description": "An array of URLs pointing to images of the tree for visual verification.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "preferredClearanceDate": {
+          "type": "string",
+          "description": "The tree owner's preferred date for the fruit to be harvested.",
+          "format": "date"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional notes or specific instructions from the tree owner regarding the harvest (e.g., 'Only morning hours', 'Tree near power line')."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the tree listing (e.g., open, bidding, contracted, completed, cancelled).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the tree listing was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the tree listing was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "treeOwnerProfileId",
+        "latitude",
+        "longitude",
+        "address",
+        "treeType",
+        "estimatedQuantityKg",
+        "photoUrls",
+        "preferredClearanceDate",
+        "status",
+        "createdAt"
+      ]
+    },
+    "Bid": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Bid",
+      "type": "object",
+      "description": "Represents a bid placed by a Contractor on a specific Tree Listing.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Bid entity."
+        },
+        "treeListingId": {
+          "type": "string",
+          "description": "Reference to the TreeListing this bid is for. (Relationship: TreeListing 1:N Bid)"
+        },
+        "contractorProfileId": {
+          "type": "string",
+          "description": "Reference to the ContractorProfile who placed this bid. (Relationship: ContractorProfile 1:N Bid)"
+        },
+        "quotePerKg": {
+          "type": "number",
+          "description": "The price quoted per kilogram for the harvest, if applicable."
+        },
+        "flatFee": {
+          "type": "number",
+          "description": "A flat fee quoted for the entire harvest job, if applicable."
+        },
+        "laborCost": {
+          "type": "number",
+          "description": "Breakdown of the bid: estimated cost for labor."
+        },
+        "transportCost": {
+          "type": "number",
+          "description": "Breakdown of the bid: estimated cost for transport."
+        },
+        "profitMargin": {
+          "type": "number",
+          "description": "Breakdown of the bid: contractor's estimated profit margin."
+        },
+        "proposedDateTime": {
+          "type": "string",
+          "description": "The date and time proposed by the contractor to carry out the harvest.",
+          "format": "date-time"
+        },
+        "guaranteedHours": {
+          "type": "number",
+          "description": "The number of hours within which the contractor guarantees to complete the harvest."
+        },
+        "additionalServices": {
+          "type": "array",
+          "description": "Optional additional services offered by the contractor (e.g., 'Will transport to market', 'Can process fruit').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the bid (e.g., pending, accepted, rejected, withdrawn).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the bid was placed.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the bid was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "treeListingId",
+        "contractorProfileId",
+        "proposedDateTime",
+        "guaranteedHours",
+        "status",
+        "createdAt"
+      ]
+    },
+    "Transaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Transaction",
+      "type": "object",
+      "description": "Records the details and financial aspects of a successful harvest contract between a Tree Owner and a Contractor.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Transaction entity."
+        },
+        "treeListingId": {
+          "type": "string",
+          "description": "Reference to the TreeListing associated with this transaction. (Relationship: TreeListing 1:1 Transaction)"
+        },
+        "winningBidId": {
+          "type": "string",
+          "description": "Reference to the specific Bid that was accepted and led to this transaction. (Relationship: Bid 1:1 Transaction)"
+        },
+        "treeOwnerProfileId": {
+          "type": "string",
+          "description": "Reference to the TreeOwnerProfile involved in this transaction. (Relationship: TreeOwnerProfile 1:N Transaction)"
+        },
+        "contractorProfileId": {
+          "type": "string",
+          "description": "Reference to the ContractorProfile involved in this transaction. (Relationship: ContractorProfile 1:N Transaction)"
+        },
+        "buyerProfileId": {
+          "type": "string",
+          "description": "Optional reference to a BuyerProfile if the transaction involves a direct sale to a buyer through the platform. (Relationship: BuyerProfile 0:1 Transaction)"
+        },
+        "totalAmountAgreed": {
+          "type": "number",
+          "description": "The final agreed amount for the entire harvest or purchase."
+        },
+        "toOwnerAmount": {
+          "type": "number",
+          "description": "The portion of the total amount designated for the Tree Owner."
+        },
+        "toContractorAmount": {
+          "type": "number",
+          "description": "The portion of the total amount designated for the Contractor."
+        },
+        "platformFeeAmount": {
+          "type": "number",
+          "description": "The platform's fee deducted from the transaction."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the transaction lifecycle (e.g., pending, escrow, harvested, delivered, completed, cancelled).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "harvestVerifiedByOwner": {
+          "type": "boolean",
+          "description": "Indicates if the tree owner has confirmed the completion of the harvest."
+        },
+        "deliveryVerifiedByBuyer": {
+          "type": "boolean",
+          "description": "Indicates if the buyer (if applicable) has confirmed receipt of the produce."
+        },
+        "paymentReleasedToOwner": {
+          "type": "boolean",
+          "description": "Indicates if the payment has been released to the Tree Owner from escrow."
+        },
+        "paymentReleasedToContractor": {
+          "type": "boolean",
+          "description": "Indicates if the payment has been released to the Contractor from escrow."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the transaction was initiated.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the transaction was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "treeListingId",
+        "winningBidId",
+        "treeOwnerProfileId",
+        "contractorProfileId",
+        "totalAmountAgreed",
+        "toOwnerAmount",
+        "toContractorAmount",
+        "platformFeeAmount",
+        "status",
+        "harvestVerifiedByOwner",
+        "paymentReleasedToOwner",
+        "paymentReleasedToContractor",
+        "createdAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores generic user profile information. Access is restricted to the user whose ID matches `userId` in the path, ensuring private data ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, corresponding to `request.auth.uid`."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/treeOwnerProfile",
+        "definition": {
+          "entityName": "TreeOwnerProfile",
+          "schema": {
+            "$ref": "#/backend/entities/TreeOwnerProfile"
+          },
+          "description": "Stores specific profile details for a Tree Owner. This document's ID is expected to be `userId`. Access is restricted to the user identified by `userId`.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user (Tree Owner), corresponding to `request.auth.uid`."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/contractorProfile",
+        "definition": {
+          "entityName": "ContractorProfile",
+          "schema": {
+            "$ref": "#/backend/entities/ContractorProfile"
+          },
+          "description": "Stores specific profile details and verification status for a Contractor. This document's ID is expected to be `userId`. Write access is restricted to the user identified by `userId`. Read access is public for discoverability by other roles, but can be filtered by 'isVerified' status for query performance and integrity.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user (Contractor), corresponding to `request.auth.uid`."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/buyerProfile",
+        "definition": {
+          "entityName": "BuyerProfile",
+          "schema": {
+            "$ref": "#/backend/entities/BuyerProfile"
+          },
+          "description": "Stores specific profile details for a Buyer. This document's ID is expected to be `userId`. Access is restricted to the user identified by `userId`.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user (Buyer), corresponding to `request.auth.uid`."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/treeListings/{treeListingId}",
+        "definition": {
+          "entityName": "TreeListing",
+          "schema": {
+            "$ref": "#/backend/entities/TreeListing"
+          },
+          "description": "Details about a fruit tree listed for harvest. Includes denormalized 'treeOwnerProfileId' for authorization independence. Tree owners can create and update their listings. Verified contractors can read listings for bidding.",
+          "params": [
+            {
+              "name": "treeListingId",
+              "description": "The unique identifier for a specific tree listing."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/treeListings/{treeListingId}/bids/{bidId}",
+        "definition": {
+          "entityName": "Bid",
+          "schema": {
+            "$ref": "#/backend/entities/Bid"
+          },
+          "description": "Represents a bid placed by a Contractor on a Tree Listing. Includes denormalized 'contractorProfileId' and 'treeOwnerProfileId' (denormalized from parent TreeListing) for authorization independence. Contractors can create/update their own bids, and tree owners can read/update bids for their listings.",
+          "params": [
+            {
+              "name": "treeListingId",
+              "description": "The unique identifier of the tree listing to which this bid belongs."
+            },
+            {
+              "name": "bidId",
+              "description": "The unique identifier for a specific bid."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/transactions/{transactionId}",
+        "definition": {
+          "entityName": "Transaction",
+          "schema": {
+            "$ref": "#/backend/entities/Transaction"
+          },
+          "description": "Records the details of a successful harvest contract. Includes denormalized 'treeOwnerProfileId', 'contractorProfileId', and 'buyerProfileId' (if applicable) for authorization independence. Access is restricted to the involved tree owner, contractor, and buyer.",
+          "params": [
+            {
+              "name": "transactionId",
+              "description": "The unique identifier for a specific transaction."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The recommended Firestore structure prioritizes Authorization Independence, Structural Segregation, and consistent Access Modeling to ensure robust security rules and efficient data access. \n\n**Authorization Independence via Denormalization:**\n*   For `TreeListing` documents, the `treeOwnerProfileId` is explicitly stored within each document. This allows security rules to directly check `request.auth.uid == resource.data.treeOwnerProfileId` for owner-specific operations (create, update, delete) without requiring a `get()` call to a parent `UserProfile` or `TreeOwnerProfile` document. This eliminates hierarchical authorization dependencies, enabling atomic operations and simplifying rule debugging.\n*   For `Bid` documents, both `contractorProfileId` (the creator/bidder) and the `treeOwnerProfileId` (denormalized from the parent `TreeListing`) are stored within each bid document. This is critical for authorization: a contractor can manage their own bid by matching `request.auth.uid == resource.data.contractorProfileId`, and a tree owner can read/update bids on their tree by matching `request.auth.uid == resource.data.treeOwnerProfileId`. This completely removes the need for `get()` calls on the parent `TreeListing` to determine who owns the listing for authorization purposes of a bid.\n*   For `Transaction` documents, `treeOwnerProfileId` and `contractorProfileId` are directly included. This ensures that only the involved parties can access or update the transaction by comparing their `uid` against these fields, again avoiding any `get()` dependencies.\n\n**QAPs (Rules are not Filters) and Structural Segregation:**\n*   **User Profiles (`/users/{userId}`, `/users/{userId}/treeOwnerProfile`, etc.):** These collections are segregated by user ID, enforcing path-based ownership. `list` operations are implicitly secured as users can only list their own data (e.g., `/users/{request.auth.uid}/...`).\n*   **TreeListings (`/treeListings/{treeListingId}`):** This is a top-level collection. This structural segregation is vital for `list` operations for contractors. Contractors need to discover *all* available trees within their service area. Placing `TreeListing`s at the top level allows for efficient querying (e.g., by location, status) by contractors. Security rules can then permit `list` access only to authenticated and *verified* contractors (e.g., `if exists(/users/$(request.auth.uid)/contractorProfile)` and `get(/users/$(request.auth.uid)/contractorProfile).data.isVerified == true`). The check for `isVerified` on the contractor's *own* profile is a check on the *actor's* capabilities, not a hierarchical dependency on the `TreeListing` data, thus it adheres to the QAP principle.\n*   **Bids (`/treeListings/{treeListingId}/bids/{bidId}`):** Bids are subcollections of `TreeListing`s. `list` operations for bids are typically performed in the context of a specific `treeListingId` for the tree owner or by `contractorProfileId` for the contractor. The denormalized `treeOwnerProfileId` ensures that tree owners can list all bids for their specific tree without complex parent lookups in rules.\n*   **Transactions (`/transactions/{transactionId}`):** This is a top-level collection, allowing both tree owners and contractors to efficiently `list` their own transactions by querying on `treeOwnerProfileId` or `contractorProfileId` fields. The rules enforce that only the involved parties can see their respective transactions.\n\nThis design leverages the database structure to naturally enforce security policies, making rules simpler, more performant, and easier to debug, while fully supporting the application's read/write and query patterns."
+  }
+}

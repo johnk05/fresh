@@ -1,0 +1,179 @@
+/**
+ * Firestore Security Rules Philosophy
+ * 
+ * Core Philosophy:
+ * This ruleset implements a multi-role marketplace model (Tree Owners, Contractors, Buyers) 
+ * with a focus on Authorization Independence. Security is primarily enforced through 
+ * document ownership and denormalized identity fields, allowing the system to verify 
+ * permissions without expensive cross-document lookups.
+ * 
+ * Data Structure:
+ * - /users/{userId}: Private user profiles and specialized role profiles (TreeOwner, Contractor, Buyer).
+ * - /treeListings/{listingId}: Publicly discoverable listings for harvest opportunities.
+ * - /treeListings/{listingId}/bids/{bidId}: Collaborative bidding process between owners and contractors.
+ * - /transactions/{transactionId}: Private financial and status records for agreed harvests.
+ * 
+ * Key Security Decisions:
+ * 1. Denormalization for Performance: Critical IDs (treeOwnerProfileId, contractorProfileId) 
+ *    are stored directly on listings, bids, and transactions to enable fast, single-document 
+ *    authorization checks.
+ * 2. Public Discoverability: Contractor profiles and Tree Listings are publicly readable 
+ *    to facilitate the marketplace, while write access is strictly restricted to owners.
+ * 3. Verified Contractor Access: Certain features (like listing discovery) are optimized 
+ *    for contractors who have undergone manual verification.
+ * 4. Prototyping Flexibility: Rules strictly enforce 'who' can write, but allow flexibility 
+ *    on 'what' is written (schema-agnostic) to support rapid development.
+ */
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Helper Functions ---
+
+    /** @description Checks if the user is authenticated. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** @description Checks if the user's UID matches the provided userId. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** @description Checks ownership and ensures the document exists for update/delete. */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
+    }
+
+    /** 
+     * @description Checks if the user with the given UID has a verified contractor profile.
+     * @param {string} uid The UID of the user to check.
+     */
+    function isVerifiedContractor(uid) {
+      // Ensure the user is signed in, the contractor profile document exists,
+      // and the 'isVerified' field is true.
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(uid)/contractorProfile) &&
+             get(/databases/$(database)/documents/users/$(uid)/contractorProfile).data.isVerified == true;
+    }
+
+    /** @description Checks if the user is a participant in a transaction or bid. */
+    function isParticipant(data) {
+      return isSignedIn() && (
+        request.auth.uid == data.treeOwnerProfileId || 
+        request.auth.uid == data.contractorProfileId || 
+        (data.buyerProfileId != null && request.auth.uid == data.buyerProfileId)
+      );
+    }
+
+    // --- Collection Rules ---
+
+    /** 
+     * @description Rules for generic user profile data.
+     * @path /users/{userId}
+     * @allow (get) Authenticated user reading their own profile.
+     * @deny (list) Attempting to list all user profiles.
+     * @principle Path-based ownership for private user data.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /** 
+     * @description Rules for Tree Owner specific profile settings.
+     * @path /users/{userId}/treeOwnerProfile
+     * @allow (create) User setting up their own tree owner role.
+     * @deny (get) Someone else trying to read this owner's private settings.
+     * @principle Path-based ownership.
+     */
+    match /users/{userId}/treeOwnerProfile {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /** 
+     * @description Rules for Contractor specific profile. Public for marketplace discovery.
+     * @path /users/{userId}/contractorProfile
+     * @allow (get) Anyone browsing available contractors.
+     * @deny (update) Anyone other than the contractor changing their team size or bank info.
+     * @principle Public read with owner-only writes.
+     */
+    match /users/{userId}/contractorProfile {
+      allow get, list: if true;
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /** 
+     * @description Rules for Buyer specific profile settings.
+     * @path /users/{userId}/buyerProfile
+     * @allow (get) Buyer reading their own metadata.
+     * @deny (create) User A creating a buyer profile for User B.
+     * @principle Path-based ownership.
+     */
+    match /users/{userId}/buyerProfile {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /** 
+     * @description Marketplace listings for trees.
+     * @path /treeListings/{treeListingId}
+     * @allow (list) A verified contractor looking for harvest jobs.
+     * @deny (update) A contractor trying to change the estimated quantity of someone else's tree.
+     * @principle Owner-only writes using denormalized 'treeOwnerProfileId'.
+     */
+    match /treeListings/{treeListingId} {
+      allow get: if isSignedIn(); // Any signed-in user can get a specific listing.
+      allow list: if isVerifiedContractor(request.auth.uid); // Only verified contractors can list (discover) listings.
+      allow create: if isSignedIn() && request.resource.data.treeOwnerProfileId == request.auth.uid;
+      allow update: if isExistingOwner(resource.data.treeOwnerProfileId) && request.resource.data.treeOwnerProfileId == resource.data.treeOwnerProfileId;
+      allow delete: if isExistingOwner(resource.data.treeOwnerProfileId);
+    }
+
+    /** 
+     * @description Bids placed on tree listings.
+     * @path /treeListings/{treeListingId}/bids/{bidId}
+     * @allow (create) A contractor submitting a quote for a tree.
+     * @deny (get) A different contractor trying to see a competitor's bid details.
+     * @principle Shared access between the bidder and the tree owner.
+     */
+    match /treeListings/{treeListingId}/bids/{bidId} {
+      allow get, list: if isParticipant(resource.data);
+      allow create: if isSignedIn() && request.resource.data.contractorProfileId == request.auth.uid;
+      allow update: if isParticipant(resource.data) && request.resource.data.contractorProfileId == resource.data.contractorProfileId;
+      allow delete: if isExistingOwner(resource.data.contractorProfileId);
+    }
+
+    /** 
+     * @description Private records of finalized harvest agreements.
+     * @path /transactions/{transactionId}
+     * @allow (get) The tree owner or contractor checking payment status.
+     * @deny (list) General public listing all platform transactions.
+     * @principle Multi-party authorization via denormalized role IDs.
+     */
+    match /transactions/{transactionId} {
+      allow get: if isParticipant(resource.data);
+      allow list: if isSignedIn(); // Queries must filter by participating IDs
+      allow create: if isParticipant(request.resource.data);
+      allow update: if isParticipant(resource.data) && 
+                      request.resource.data.treeOwnerProfileId == resource.data.treeOwnerProfileId &&
+                      request.resource.data.contractorProfileId == resource.data.contractorProfileId;
+      allow delete: if false; // Transactions are permanent records
+    }
+  }
+}
+
+// Prototyping Mode: Authorization is strictly enforced based on user identity and 
+// denormalized relationship fields, while specific data schemas are flexible. 
+// Validates only 'id' and 'ownerId' fields to maintain relational integrity.

@@ -12,12 +12,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, MapPin, Sparkles } from "lucide-react";
+import { CalendarIcon, Sparkles } from "lucide-react";
 import { Language, translations } from "@/lib/translations";
 import { getDynamicPricingSuggestion, TreeOwnerDynamicPricingOutput } from "@/ai/flows/tree-owner-dynamic-pricing";
+import { useFirestore, useFirebaseApp } from "@/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 export function TreeRegistration({ language, onComplete }: { language: Language, onComplete: () => void }) {
   const t = translations[language];
+  const db = useFirestore();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<{
     name: string;
@@ -40,7 +45,6 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
   const [isPricingLoading, setIsPricingLoading] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Load persistent state
   useEffect(() => {
     const savedData = localStorage.getItem('fresh_tree_form');
     const savedStep = localStorage.getItem('fresh_tree_step');
@@ -54,16 +58,10 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
       }
     }
     if (savedStep) setStep(parseInt(savedStep));
-    
-    // If no date was saved, initialize with current date
-    if (!savedData || !JSON.parse(savedData).date) {
-      setFormData(prev => ({ ...prev, date: new Date() }));
-    }
-    
+    if (!formData.date) setFormData(prev => ({ ...prev, date: new Date() }));
     setIsHydrated(true);
   }, []);
 
-  // Save state on change
   useEffect(() => {
     if (isHydrated) {
       localStorage.setItem('fresh_tree_form', JSON.stringify(formData));
@@ -88,6 +86,38 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
     } finally {
       setIsPricingLoading(false);
     }
+  };
+
+  const handleFinalSubmit = () => {
+    if (!db) return;
+
+    const listingData = {
+      ownerName: formData.name,
+      phone: formData.phone,
+      treeType: formData.treeType,
+      quantity: formData.quantity,
+      harvestDate: formData.date?.toISOString(),
+      location: formData.location,
+      notes: formData.notes,
+      suggestedPrice: aiPrice?.suggestedPricePerKg || null,
+      status: "open",
+      createdAt: serverTimestamp(),
+    };
+
+    addDoc(collection(db, "listings"), listingData)
+      .then(() => {
+        localStorage.removeItem('fresh_tree_form');
+        localStorage.removeItem('fresh_tree_step');
+        onComplete();
+      })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: "listings",
+          operation: "create",
+          requestResourceData: listingData,
+        });
+        errorEmitter.emit("permission-error", permissionError);
+      });
   };
 
   const steps = [
@@ -116,7 +146,7 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
     { title: t.treeType, component: (
       <div className="space-y-4">
         <div>
-          <Label>{t.treeType}</Label>
+          <Label>മാവ് Inam</Label>
           <Select value={formData.treeType} onValueChange={v => setFormData({...formData, treeType: v})}>
             <SelectTrigger className="mt-1">
               <SelectValue />
@@ -214,7 +244,7 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
     <Card className="w-full max-w-md mx-auto overflow-hidden border-none shadow-xl">
       <CardHeader className="bg-primary/10">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-xl">{t.registerTree}</CardTitle>
+          <CardTitle className="text-xl">Ente മാവ് register cheyyuka</CardTitle>
           <span className="text-xs font-medium text-primary bg-primary/20 px-2 py-1 rounded-full">Step {step}/4</span>
         </div>
         <CardDescription>{t.registerTreeSub}</CardDescription>
@@ -244,9 +274,7 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
               if (step < 4) {
                 setStep(step + 1);
               } else {
-                localStorage.removeItem('fresh_tree_form');
-                localStorage.removeItem('fresh_tree_step');
-                onComplete();
+                handleFinalSubmit();
               }
             }}
           >
