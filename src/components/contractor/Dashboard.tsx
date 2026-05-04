@@ -3,10 +3,8 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { MapPin, ArrowRight, TrendingUp, Info, User } from "lucide-react";
+import { MapPin, User } from "lucide-react";
 import { Language, translations } from "@/lib/translations";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -18,7 +16,6 @@ export function ContractorDashboard({ language }: { language: Language }) {
   const mapImg = PlaceHolderImages.find(img => img.id === 'kerala-map');
 
   useEffect(() => {
-    // Load profile
     const savedProfile = localStorage.getItem('fresh_user_profile');
     if (savedProfile) {
       try {
@@ -28,7 +25,6 @@ export function ContractorDashboard({ language }: { language: Language }) {
       }
     }
 
-    // Load local listings
     const savedListings = localStorage.getItem('fresh_local_listings');
     if (savedListings) {
       try {
@@ -37,7 +33,6 @@ export function ContractorDashboard({ language }: { language: Language }) {
         console.error("Failed to load listings", e);
       }
     } else {
-      // Mock data if empty
       const mockListings = [
         {
           id: '1',
@@ -62,8 +57,7 @@ export function ContractorDashboard({ language }: { language: Language }) {
 
   return (
     <div className="space-y-6 pb-24">
-      {/* Snapchat-style Map View */}
-      <div className="relative h-96 w-full bg-muted rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white">
+      <div className="relative h-[60vh] w-full bg-muted rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white">
         {mapImg && (
           <Image 
             src={mapImg.imageUrl} 
@@ -75,7 +69,6 @@ export function ContractorDashboard({ language }: { language: Language }) {
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/30 pointer-events-none" />
         
-        {/* Listing Pins */}
         {listings.map((l, i) => (
           <motion.div
             key={l.id}
@@ -99,14 +92,10 @@ export function ContractorDashboard({ language }: { language: Language }) {
                 animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
                 transition={{ duration: 2, repeat: Infinity }}
               />
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white px-3 py-1 rounded-full text-[10px] font-bold whitespace-nowrap shadow-lg border border-border">
-                {l.treeType} • {l.estimatedQuantityKg}kg
-              </div>
             </div>
           </motion.div>
         ))}
 
-        {/* User's shared location pin (Snapchat Style) */}
         {userProfile?.location && (
           <motion.div
             className="absolute z-20"
@@ -139,72 +128,6 @@ export function ContractorDashboard({ language }: { language: Language }) {
           </div>
           <Badge className="bg-accent text-white font-bold py-1 px-3 rounded-full">{listings.length} listings</Badge>
         </div>
-      </div>
-
-      <div className="px-1">
-        <h2 className="text-2xl mb-6 flex items-center font-bold tracking-tight text-accent">
-          <TrendingUp className="w-6 h-6 mr-3" />
-          {t.nearbyListings}
-        </h2>
-        
-        {listings.length === 0 ? (
-          <div className="text-center p-12 bg-muted/20 rounded-3xl border-2 border-dashed border-muted">
-             <p className="font-medium">No harvests yet.</p>
-             <p className="text-sm">Tree owners will list them soon!</p>
-          </div>
-        ) : (
-          <div className="grid gap-6">
-            {listings.map((l) => (
-              <motion.div
-                key={l.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <Card className="overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 group rounded-[2rem]">
-                  <CardContent className="p-0">
-                    <div className="flex">
-                      <div className="w-4 bg-primary transition-all group-hover:w-6" />
-                      <div className="p-6 flex-1 bg-card">
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="font-bold text-2xl group-hover:text-primary transition-colors">{l.ownerName}</h3>
-                            <p className="text-sm text-muted-foreground flex items-center mt-1">
-                              <MapPin className="w-4 h-4 mr-2 text-primary" /> Local Harvest
-                            </p>
-                          </div>
-                          <Badge variant="secondary" className="bg-muted text-[10px] font-bold uppercase tracking-widest px-4 py-1">
-                            {l.status}
-                          </Badge>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="bg-muted/30 p-4 rounded-2xl flex items-center border border-border/50">
-                            <Info className="w-5 h-5 mr-4 text-primary" />
-                            <div className="leading-tight">
-                              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Type</p>
-                              <p className="font-bold text-md">{l.treeType}</p>
-                            </div>
-                          </div>
-                          <div className="bg-muted/30 p-4 rounded-2xl flex items-center border border-border/50">
-                            <TrendingUp className="w-5 h-5 mr-4 text-primary" />
-                            <div className="leading-tight">
-                              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Qty</p>
-                              <p className="font-bold text-md">{l.estimatedQuantityKg} kg</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <Button className="w-full mt-6 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-2xl h-14 shadow-xl shadow-primary/20 text-lg" size="lg">
-                          {t.placeBid} <ArrowRight className="ml-2 w-5 h-5" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

@@ -7,13 +7,14 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { RoleSelector } from "@/components/RoleSelector";
 import { TreeRegistration } from "@/components/owner/TreeRegistration";
 import { ContractorDashboard } from "@/components/contractor/Dashboard";
+import { ListingsView } from "@/components/contractor/ListingsView";
 import { AccountPage } from "@/components/profile/AccountPage";
 import { Language } from "@/lib/translations";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, ClipboardList, Map as MapIcon, User } from "lucide-react";
 import { Toaster } from "@/components/ui/toaster";
 
-type AppView = 'landing' | 'owner-form' | 'owner-done' | 'contractor-dash' | 'account';
+type AppView = 'landing' | 'owner-form' | 'owner-done' | 'contractor-dash' | 'listings' | 'account';
 
 export default function FreshApp() {
   const [isHydrated, setIsHydrated] = useState(false);
@@ -21,13 +22,9 @@ export default function FreshApp() {
   const [language, setLanguage] = useState<Language>('manglish');
   const [view, setView] = useState<AppView>('landing');
 
-  // Load state from localStorage on mount
   useEffect(() => {
     const savedView = localStorage.getItem('fresh_view');
     const savedLang = localStorage.getItem('fresh_lang');
-    
-    // We intentionally ignore 'fresh_seen_intro' here because the user
-    // wants the intro to show every time they enter via the link.
     
     if (savedView) setView(savedView as any);
     if (savedLang) setLanguage(savedLang as any);
@@ -35,7 +32,6 @@ export default function FreshApp() {
     setIsHydrated(true);
   }, []);
 
-  // Save state to localStorage whenever it changes
   useEffect(() => {
     if (isHydrated) {
       localStorage.setItem('fresh_view', view);
@@ -45,12 +41,9 @@ export default function FreshApp() {
 
   const handleIntroComplete = () => {
     setShowIntro(false);
-    // We update this just in case other parts of the app rely on it,
-    // but the mount useEffect no longer uses it to skip the intro.
     localStorage.setItem('fresh_seen_intro', 'true');
   };
 
-  // Prevent hydration flash
   if (!isHydrated) {
     return <div className="min-h-screen bg-background" />;
   }
@@ -137,6 +130,17 @@ export default function FreshApp() {
             </motion.div>
           )}
 
+          {view === 'listings' && (
+            <motion.div
+              key="listings"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+            >
+              <ListingsView language={language} />
+            </motion.div>
+          )}
+
           {view === 'account' && (
             <motion.div
               key="account"
@@ -150,7 +154,6 @@ export default function FreshApp() {
         </AnimatePresence>
       </main>
 
-      {/* Navigation - Thumb Friendly */}
       {(view !== 'landing') && (
         <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/80 backdrop-blur-xl border-t border-border flex justify-around items-center h-24 px-6 z-40">
           <NavButton 
@@ -165,8 +168,8 @@ export default function FreshApp() {
           />
           <NavButton 
             icon={<ClipboardList className="w-6 h-6" />} 
-            active={false} 
-            onClick={() => {}} 
+            active={view === 'listings'} 
+            onClick={() => setView('listings')} 
           />
           <NavButton 
             icon={<User className="w-6 h-6" />} 
