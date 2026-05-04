@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ import { MapPin, ArrowRight, TrendingUp, Info, User } from "lucide-react";
 import { Language, translations } from "@/lib/translations";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { useFirestore, useCollection } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, limit } from "firebase/firestore";
 
 export function ContractorDashboard({ language }: { language: Language }) {
@@ -19,12 +19,12 @@ export function ContractorDashboard({ language }: { language: Language }) {
   const [userProfile, setUserProfile] = useState<any>(null);
   const mapImg = PlaceHolderImages.find(img => img.id === 'kerala-map');
 
-  const listingsQuery = useMemo(() => {
+  const listingsQuery = useMemoFirebase(() => {
     if (!db) return null;
-    return query(collection(db, "listings"), orderBy("createdAt", "desc"), limit(20));
+    return query(collection(db, "treeListings"), orderBy("createdAt", "desc"), limit(20));
   }, [db]);
 
-  const { data: listings, loading } = useCollection(listingsQuery);
+  const { data: listings, isLoading: loading } = useCollection(listingsQuery);
 
   useEffect(() => {
     const saved = localStorage.getItem('fresh_user_profile');
@@ -77,7 +77,7 @@ export function ContractorDashboard({ language }: { language: Language }) {
                 transition={{ duration: 2, repeat: Infinity }}
               />
               <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white px-3 py-1 rounded-full text-[10px] font-bold whitespace-nowrap shadow-lg border border-border">
-                {l.treeType} • {l.quantity}kg
+                {l.treeType} • {l.estimatedQuantityKg}kg
               </div>
             </div>
           </motion.div>
@@ -126,14 +126,14 @@ export function ContractorDashboard({ language }: { language: Language }) {
         
         {loading ? (
           <div className="text-center p-12 text-muted-foreground">Loading harvests...</div>
-        ) : listings?.length === 0 ? (
+        ) : !listings || listings.length === 0 ? (
           <div className="text-center p-12 bg-muted/20 rounded-3xl border-2 border-dashed border-muted">
              <p className="font-medium">No harvests yet.</p>
              <p className="text-sm">Tree owners will list them soon!</p>
           </div>
         ) : (
           <div className="grid gap-6">
-            {listings?.map((l) => (
+            {listings.map((l) => (
               <motion.div
                 key={l.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -168,7 +168,7 @@ export function ContractorDashboard({ language }: { language: Language }) {
                             <TrendingUp className="w-5 h-5 mr-4 text-primary" />
                             <div className="leading-tight">
                               <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Qty</p>
-                              <p className="font-bold text-md">{l.quantity} kg</p>
+                              <p className="font-bold text-md">{l.estimatedQuantityKg} kg</p>
                             </div>
                           </div>
                         </div>

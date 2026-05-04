@@ -15,7 +15,7 @@ import { format } from "date-fns";
 import { CalendarIcon, Sparkles } from "lucide-react";
 import { Language, translations } from "@/lib/translations";
 import { getDynamicPricingSuggestion, TreeOwnerDynamicPricingOutput } from "@/ai/flows/tree-owner-dynamic-pricing";
-import { useFirestore, useFirebaseApp } from "@/firebase";
+import { useFirestore } from "@/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -95,16 +95,20 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
       ownerName: formData.name,
       phone: formData.phone,
       treeType: formData.treeType,
-      quantity: formData.quantity,
-      harvestDate: formData.date?.toISOString(),
-      location: formData.location,
+      estimatedQuantityKg: formData.quantity,
+      preferredClearanceDate: formData.date?.toISOString().split('T')[0], // YYYY-MM-DD
+      latitude: formData.location.lat,
+      longitude: formData.location.lng,
+      address: "Kerala, India", // Simplified for MVP
       notes: formData.notes,
       suggestedPrice: aiPrice?.suggestedPricePerKg || null,
       status: "open",
+      photoUrls: [], // Placeholder for images
       createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
 
-    addDoc(collection(db, "listings"), listingData)
+    addDoc(collection(db, "treeListings"), listingData)
       .then(() => {
         localStorage.removeItem('fresh_tree_form');
         localStorage.removeItem('fresh_tree_step');
@@ -112,7 +116,7 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
       })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
-          path: "listings",
+          path: "treeListings",
           operation: "create",
           requestResourceData: listingData,
         });
