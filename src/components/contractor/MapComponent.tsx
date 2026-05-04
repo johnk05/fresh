@@ -29,35 +29,53 @@ export default function MapComponent({ center, listings, userLocation }: MapProp
 
   if (!isMounted) return <div className="w-full h-full bg-muted animate-pulse" />;
 
-  const mangoIcon = L.divIcon({
-    className: "custom-marker-container",
-    html: `
-      <div class="flex flex-col items-center">
-        <div class="relative group cursor-pointer">
-          <div class="w-10 h-10 rounded-full bg-white shadow-2xl border-4 border-white flex items-center justify-center text-2xl overflow-hidden">
-            🥭
+  // Dynamic icon creator for listings
+  const createMangoIcon = (name: string, distance: string, time: string) => {
+    return L.divIcon({
+      className: "custom-marker-container",
+      html: `
+        <div class="flex flex-col items-center">
+          <div class="relative group cursor-pointer">
+            <div class="w-12 h-12 rounded-full bg-white shadow-[0_8px_20px_-5px_rgba(0,0,0,0.3)] border-[3px] border-white flex items-center justify-center text-3xl overflow-hidden transition-transform group-hover:scale-110">
+              🥭
+            </div>
+            <div class="absolute inset-0 bg-primary/20 rounded-full animate-ping -z-10"></div>
           </div>
-          <div class="absolute inset-0 bg-orange-400/20 rounded-full animate-ping -z-10"></div>
+          <div class="mt-2 flex flex-col items-center gap-0.5">
+            <div class="bg-black/80 backdrop-blur-sm text-white px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap shadow-lg ring-1 ring-white/20">
+              ${name}
+            </div>
+            <div class="flex gap-1">
+              <div class="bg-white/95 text-black px-2 py-0.5 rounded-full text-[9px] font-black whitespace-nowrap shadow-md border border-black/5">
+                ${distance}
+              </div>
+              <div class="bg-white/95 text-black px-2 py-0.5 rounded-full text-[9px] font-black whitespace-nowrap shadow-md border border-black/5">
+                ${time}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    `,
-    iconSize: [40, 40],
-    iconAnchor: [20, 20],
-  });
+      `,
+      iconSize: [80, 100],
+      iconAnchor: [40, 40],
+    });
+  };
 
   const meIcon = L.divIcon({
     className: "custom-marker-container",
     html: `
       <div class="flex flex-col items-center">
-        <div class="relative">
-          <div class="w-4 h-4 bg-[#3B82F6] rounded-full border-2 border-white shadow-lg relative z-10"></div>
-          <div class="absolute inset-0 bg-[#3B82F6]/40 rounded-full animate-pulse scale-[2]"></div>
+        <div class="relative group">
+          <div class="w-10 h-10 rounded-full bg-white shadow-2xl border-[3px] border-[#3B82F6] flex items-center justify-center text-2xl overflow-hidden">
+            🥭
+          </div>
+          <div class="absolute inset-0 bg-[#3B82F6]/30 rounded-full animate-pulse scale-[1.8] -z-10"></div>
         </div>
-        <div class="mt-1 bg-black/70 text-white px-2 py-0.5 rounded-full text-[8px] font-bold">ME</div>
+        <div class="mt-2 bg-[#3B82F6] text-white px-3 py-1 rounded-full text-[10px] font-black shadow-lg">YOU</div>
       </div>
     `,
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
+    iconSize: [40, 60],
+    iconAnchor: [20, 20],
   });
 
   return (
@@ -73,7 +91,7 @@ export default function MapComponent({ center, listings, userLocation }: MapProp
           <Marker 
             key={l.id} 
             position={[l.location.lat, l.location.lng]} 
-            icon={mangoIcon}
+            icon={createMangoIcon(l.ownerName || 'Owner', l.distance || '??km', l.time || 'now')}
           />
         )
       ))}
