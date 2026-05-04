@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -24,11 +25,12 @@ export default function FreshApp() {
   useEffect(() => {
     const savedView = localStorage.getItem('fresh_view');
     const savedLang = localStorage.getItem('fresh_lang');
-    const hasSeenIntro = localStorage.getItem('fresh_seen_intro');
-
+    
+    // We intentionally ignore 'fresh_seen_intro' here because the user
+    // wants the intro to show every time they enter via the link.
+    
     if (savedView) setView(savedView as any);
     if (savedLang) setLanguage(savedLang as any);
-    if (hasSeenIntro === 'true') setShowIntro(false);
     
     setIsHydrated(true);
   }, []);
@@ -43,6 +45,8 @@ export default function FreshApp() {
 
   const handleIntroComplete = () => {
     setShowIntro(false);
+    // We update this just in case other parts of the app rely on it,
+    // but the mount useEffect no longer uses it to skip the intro.
     localStorage.setItem('fresh_seen_intro', 'true');
   };
 
