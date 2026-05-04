@@ -4,7 +4,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
-import { Badge } from "@/components/ui/badge";
 import { 
   User, 
   Search, 
@@ -140,24 +139,6 @@ export function ContractorDashboard({ language }: { language: Language }) {
         >
           <Navigation2 className="w-7 h-7 text-primary" />
         </motion.div>
-      </div>
-
-      {/* Popular Clusters Indicator (Bottom) */}
-      <div className="absolute bottom-6 left-6 right-6 z-[1000]">
-        <div className="bg-white/90 backdrop-blur-xl p-4 rounded-[2rem] flex items-center justify-between shadow-2xl border border-white/50">
-          <div className="flex items-center gap-3">
-            <div className="flex -space-x-2">
-              {[1,2,3].map(i => (
-                <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-primary/20 flex items-center justify-center text-xs">🥭</div>
-              ))}
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none mb-1">Local Hotspot</p>
-              <p className="text-sm font-bold leading-none tracking-tight">3 Harvests near Palakkad</p>
-            </div>
-          </div>
-          <Badge className="bg-primary text-white font-bold py-1 px-3 rounded-full border-none">View All</Badge>
-        </div>
       </div>
     </div>
   );
