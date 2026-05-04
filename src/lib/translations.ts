@@ -31,7 +31,14 @@ export const translations = {
     yourQuote: "Your Quote (₹/kg)",
     dashboard: "Dashboard",
     nearbyListings: "Nearby Harvest Opportunities",
-    back: "Back"
+    back: "Back",
+    account: "Account",
+    profile: "Profile",
+    saveProfile: "Save Profile",
+    shareLocation: "Share Current Location",
+    locationShared: "Location Shared!",
+    sharingLocation: "Getting Location...",
+    personalInfo: "Personal Information"
   },
   ml: {
     heroTagline: "കേരളത്തിന്റെ വിളവ്, നിങ്ങളുടെ വീട്ടുമുറ്റത്ത്",
@@ -65,7 +72,14 @@ export const translations = {
     yourQuote: "നിങ്ങളുടെ വില (₹/kg)",
     dashboard: "ഡാഷ്‌ബോർഡ്",
     nearbyListings: "അടുത്തുള്ള അവസരങ്ങൾ",
-    back: "തിരികെ"
+    back: "തിരികെ",
+    account: "അക്കൗണ്ട്",
+    profile: "പ്രൊഫൈൽ",
+    saveProfile: "പ്രൊഫൈൽ സേവ് ചെയ്യുക",
+    shareLocation: "സ്ഥലം പങ്കിടുക",
+    locationShared: "സ്ഥലം പങ്കിട്ടു!",
+    sharingLocation: "സ്ഥലം കണ്ടെത്തുന്നു...",
+    personalInfo: "വ്യക്തിഗത വിവരങ്ങൾ"
   },
   manglish: {
     heroTagline: "Keralathinte Vila, Ningalude Veetumuttathu",
@@ -99,7 +113,14 @@ export const translations = {
     yourQuote: "Ningalude vila (₹/kg)",
     dashboard: "Dashboard",
     nearbyListings: "Aduthulla avasarangal",
-    back: "Thirike"
+    back: "Thirike",
+    account: "Account",
+    profile: "Profile",
+    saveProfile: "Profile save cheyyuka",
+    shareLocation: "Sthalam share cheyyuka",
+    locationShared: "Sthalam share cheythu!",
+    sharingLocation: "Sthalam nokkunnu...",
+    personalInfo: "Personal vivarangal"
   }
 };
 

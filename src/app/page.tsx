@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,15 +6,19 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { RoleSelector } from "@/components/RoleSelector";
 import { TreeRegistration } from "@/components/owner/TreeRegistration";
 import { ContractorDashboard } from "@/components/contractor/Dashboard";
+import { AccountPage } from "@/components/profile/AccountPage";
 import { Language } from "@/lib/translations";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, ClipboardList, Map as MapIcon, User } from "lucide-react";
+import { Toaster } from "@/components/ui/toaster";
+
+type AppView = 'landing' | 'owner-form' | 'owner-done' | 'contractor-dash' | 'account';
 
 export default function FreshApp() {
   const [isHydrated, setIsHydrated] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
   const [language, setLanguage] = useState<Language>('manglish');
-  const [view, setView] = useState<'landing' | 'owner-form' | 'owner-done' | 'contractor-dash'>('landing');
+  const [view, setView] = useState<AppView>('landing');
 
   // Load state from localStorage on mount
   useEffect(() => {
@@ -67,7 +70,7 @@ export default function FreshApp() {
         </div>
       </header>
 
-      <main className="px-6 pb-24">
+      <main className="px-6 pb-32">
         <AnimatePresence mode="wait">
           {view === 'landing' && (
             <motion.div
@@ -129,18 +132,47 @@ export default function FreshApp() {
               <ContractorDashboard language={language} />
             </motion.div>
           )}
+
+          {view === 'account' && (
+            <motion.div
+              key="account"
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+            >
+              <AccountPage language={language} />
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
 
       {/* Navigation - Thumb Friendly */}
-      {(view === 'contractor-dash' || view === 'owner-done' || view === 'owner-form') && (
-        <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/80 backdrop-blur-xl border-t border-border flex justify-around items-center h-20 px-6 z-40">
-          <NavButton icon={<Home className="w-6 h-6" />} active={view === 'landing' || view === 'owner-form' || view === 'owner-done'} onClick={() => setView('landing')} />
-          <NavButton icon={<MapIcon className="w-6 h-6" />} active={view === 'contractor-dash'} onClick={() => setView('contractor-dash')} />
-          <NavButton icon={<ClipboardList className="w-6 h-6" />} active={false} onClick={() => {}} />
-          <NavButton icon={<User className="w-6 h-6" />} active={false} onClick={() => {}} />
+      {(view !== 'landing') && (
+        <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/80 backdrop-blur-xl border-t border-border flex justify-around items-center h-24 px-6 z-40">
+          <NavButton 
+            icon={<Home className="w-6 h-6" />} 
+            active={view === 'owner-form' || view === 'owner-done'} 
+            onClick={() => setView('owner-form')} 
+          />
+          <NavButton 
+            icon={<MapIcon className="w-6 h-6" />} 
+            active={view === 'contractor-dash'} 
+            onClick={() => setView('contractor-dash')} 
+          />
+          <NavButton 
+            icon={<ClipboardList className="w-6 h-6" />} 
+            active={false} 
+            onClick={() => {}} 
+          />
+          <NavButton 
+            icon={<User className="w-6 h-6" />} 
+            active={view === 'account'} 
+            onClick={() => setView('account')} 
+          />
         </nav>
       )}
+
+      <Toaster />
     </div>
   );
 }
@@ -149,9 +181,10 @@ function NavButton({ icon, active, onClick }: { icon: React.ReactNode, active: b
   return (
     <button 
       onClick={onClick}
-      className={`p-3 rounded-2xl transition-all ${active ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-110' : 'text-muted-foreground hover:bg-muted'}`}
+      className={`p-4 rounded-2xl transition-all duration-300 flex flex-col items-center justify-center ${active ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-110 -translate-y-2' : 'text-muted-foreground hover:bg-muted'}`}
     >
       {icon}
+      {active && <motion.div layoutId="nav-dot" className="w-1.5 h-1.5 bg-white rounded-full mt-1" />}
     </button>
   );
 }
