@@ -33,7 +33,6 @@ export default function FreshApp() {
     if (savedProfile) {
       try {
         const parsed = JSON.parse(savedProfile);
-        // Only consider returning user if they have basic info
         if (parsed.name || parsed.phone) {
           setIsReturningUser(true);
           setView('contractor-dash');
@@ -73,7 +72,6 @@ export default function FreshApp() {
 
   return (
     <div className="max-w-md mx-auto relative min-h-screen">
-      {/* Conditionally hide standard header for the full-screen map dashboard */}
       {view !== 'contractor-dash' && view !== 'listings' && (
         <header className="p-6 pt-12">
           <div className="flex justify-between items-center">
@@ -89,7 +87,6 @@ export default function FreshApp() {
         </header>
       )}
 
-      {/* Adjust main padding for the full-screen views */}
       <main className={`${(view === 'contractor-dash' || view === 'listings') ? 'px-6 pt-12' : 'px-6'} pb-32`}>
         <AnimatePresence mode="wait">
           {view === 'landing' && (
@@ -149,7 +146,7 @@ export default function FreshApp() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
-              <ContractorDashboard language={language} />
+              <ContractorDashboard language={language} onNavigate={setView} />
             </motion.div>
           )}
 
@@ -179,7 +176,6 @@ export default function FreshApp() {
 
       {(view !== 'landing') && (
         <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-xl border-t border-border/50 flex justify-around items-end h-28 px-8 z-40 rounded-t-[3rem] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
-          {/* Only show Home and Account if NOT a returning user with data */}
           {!isReturningUser && (
             <NavButton 
               icon={<Home className="w-6 h-6" />} 
