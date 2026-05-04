@@ -52,21 +52,40 @@ export function AccountPage({ language }: { language: Language }) {
     setIsSharing(true);
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const newLocation = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
           };
+          
+          let locationName = "Current Shared Location";
+          try {
+            // Real Reverse Geocoding
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${newLocation.lat}&lon=${newLocation.lng}`);
+            const data = await response.json();
+            const addr = data.address;
+            const hood = addr.suburb || addr.neighbourhood || addr.village || addr.city_district;
+            const city = addr.city || addr.town || addr.state;
+            
+            if (hood && city) {
+              locationName = `${hood}, ${city}`;
+            } else if (city) {
+              locationName = city;
+            }
+          } catch (err) {
+            console.error("Geocoding failed", err);
+          }
+
           const updated = {
             ...profile,
             location: newLocation,
-            locationName: "Current Shared Location"
+            locationName: locationName
           };
           setProfile(updated);
           setIsSharing(false);
           toast({
             title: t.locationShared,
-            description: "Your location is now visible on the harvest map.",
+            description: `Location saved: ${locationName}`,
           });
         },
         (error) => {
@@ -161,8 +180,8 @@ export function AccountPage({ language }: { language: Language }) {
                 ) : profile.location ? (
                   <>
                     <CheckCircle2 className="w-8 h-8 text-primary group-hover:scale-110 transition-transform" />
-                    <div className="text-center">
-                      <p className="font-bold text-primary">{t.locationShared}</p>
+                    <div className="text-center px-4">
+                      <p className="font-bold text-primary truncate max-w-[200px]">{profile.locationName || t.locationShared}</p>
                       <p className="text-[10px] text-muted-foreground">
                         {profile.location.lat.toFixed(4)}, {profile.location.lng.toFixed(4)}
                       </p>

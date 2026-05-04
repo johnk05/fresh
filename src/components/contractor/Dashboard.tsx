@@ -92,6 +92,7 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
     if (userProfile?.location) {
       setMapCenter([userProfile.location.lat, userProfile.location.lng]);
     } else {
+      // Fallback to Kochi if no user location, or stay at current center
       setMapCenter([10.8505, 76.2711]);
     }
   };
@@ -100,32 +101,50 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
     setIsSharing(true);
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const newLocation = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
           };
           
-          // Simulation of neighborhood naming
-          const neighborhoods = ["Edappally", "Kakkanad", "Vytilla", "Fort Kochi", "Aluva", "Palarivattom"];
-          const randomHood = neighborhoods[Math.floor(Math.random() * neighborhoods.length)];
-          const mockLocationName = `${randomHood}, Kochi`;
+          let locationName = "Current Location";
+          try {
+            // Real Reverse Geocoding via Nominatim (OSM)
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${newLocation.lat}&lon=${newLocation.lng}`);
+            const data = await response.json();
+            
+            // Extract meaningful neighborhood or city name
+            const addr = data.address;
+            const hood = addr.suburb || addr.neighbourhood || addr.village || addr.city_district;
+            const city = addr.city || addr.town || addr.state;
+            
+            if (hood && city) {
+              locationName = `${hood}, ${city}`;
+            } else if (city) {
+              locationName = city;
+            }
+          } catch (err) {
+            console.error("Reverse geocoding failed", err);
+          }
           
           const updatedProfile = {
             ...userProfile,
             location: newLocation,
-            locationName: mockLocationName
+            locationName: locationName
           };
 
           setUserProfile(updatedProfile);
           setMapCenter([newLocation.lat, newLocation.lng]);
-          setCurrentLocationName(mockLocationName);
+          setCurrentLocationName(locationName);
+          
+          // Slight temp variance simulation
+          setCurrentTemp(28 + Math.floor(Math.random() * 7));
           
           localStorage.setItem('fresh_user_profile', JSON.stringify(updatedProfile));
           setIsSharing(false);
           toast({
             title: t.locationShared,
-            description: `Now sharing location in ${mockLocationName}`,
+            description: `Now sharing location in ${locationName}`,
           });
         },
         (error) => {
@@ -153,7 +172,7 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
         />
       </div>
 
-      {/* Top Bar Overlay - Matching Reference Image */}
+      {/* Top Bar Overlay */}
       <div className="absolute top-6 left-4 right-4 z-[1000] flex items-center justify-between gap-3 pointer-events-none">
         <motion.div 
           whileTap={{ scale: 0.9 }}
