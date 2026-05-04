@@ -178,7 +178,8 @@ export default function FreshApp() {
       </main>
 
       {(view !== 'landing') && (
-        <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-xl border-t border-border flex justify-around items-center h-24 px-6 z-40 rounded-t-[2.5rem]">
+        <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-xl border-t border-border/50 flex justify-around items-end h-28 px-8 z-40 rounded-t-[3rem] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
+          {/* Only show Home and Account if NOT a returning user with data */}
           {!isReturningUser && (
             <NavButton 
               icon={<Home className="w-6 h-6" />} 
@@ -188,13 +189,13 @@ export default function FreshApp() {
           )}
           
           <NavButton 
-            icon={<MapIcon className="w-6 h-6" />} 
+            icon={<MapIcon className="w-7 h-7" />} 
             active={view === 'contractor-dash'} 
             onClick={() => setView('contractor-dash')} 
           />
           
           <NavButton 
-            icon={<ClipboardList className="w-6 h-6" />} 
+            icon={<ClipboardList className="w-7 h-7" />} 
             active={view === 'listings'} 
             onClick={() => setView('listings')} 
           />
@@ -216,12 +217,27 @@ export default function FreshApp() {
 
 function NavButton({ icon, active, onClick }: { icon: React.ReactNode, active: boolean, onClick: () => void }) {
   return (
-    <button 
-      onClick={onClick}
-      className={`p-4 rounded-2xl transition-all duration-300 flex flex-col items-center justify-center ${active ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-110 -translate-y-2' : 'text-muted-foreground hover:bg-muted'}`}
-    >
-      {icon}
-      {active && <motion.div layoutId="nav-dot" className="w-1.5 h-1.5 bg-white rounded-full mt-1" />}
-    </button>
+    <div className="flex flex-col items-center pb-6">
+      <button 
+        onClick={onClick}
+        className={`relative p-5 rounded-[2rem] transition-all duration-300 flex items-center justify-center ${
+          active 
+            ? 'bg-primary text-white shadow-[0_15px_30px_-5px_rgba(253,183,20,0.4)] scale-105 -translate-y-2' 
+            : 'text-muted-foreground hover:bg-muted/50'
+        }`}
+      >
+        {icon}
+      </button>
+      <div className="h-1.5 mt-2">
+        {active && (
+          <motion.div 
+            layoutId="nav-dot" 
+            className="w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_rgba(253,183,20,0.8)]" 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+          />
+        )}
+      </div>
+    </div>
   );
 }
