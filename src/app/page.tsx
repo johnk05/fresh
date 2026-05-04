@@ -29,7 +29,6 @@ export default function FreshApp() {
     
     if (savedLang) setLanguage(savedLang as any);
     
-    // Logic for returning users: If they have a profile, go straight to the Map view
     if (savedProfile) {
       setView('contractor-dash');
     } else if (savedView) {
@@ -50,7 +49,6 @@ export default function FreshApp() {
 
   const handleIntroComplete = () => {
     setShowIntro(false);
-    // Note: We don't save intro status anymore because user wants it to show every time
   };
 
   if (!isHydrated) {
@@ -63,20 +61,24 @@ export default function FreshApp() {
 
   return (
     <div className="max-w-md mx-auto relative min-h-screen">
-      <header className="p-6 pt-12">
-        <div className="flex justify-between items-center">
-          <motion.h1 
-            className="text-3xl font-headline font-bold text-accent"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            Fresh
-          </motion.h1>
-          <LanguageToggle language={language} setLanguage={setLanguage} />
-        </div>
-      </header>
+      {/* Conditionally hide standard header for the full-screen map dashboard */}
+      {view !== 'contractor-dash' && (
+        <header className="p-6 pt-12">
+          <div className="flex justify-between items-center">
+            <motion.h1 
+              className="text-3xl font-headline font-bold text-accent"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              Fresh
+            </motion.h1>
+            <LanguageToggle language={language} setLanguage={setLanguage} />
+          </div>
+        </header>
+      )}
 
-      <main className="px-6 pb-32">
+      {/* Adjust main padding for the full-screen map view */}
+      <main className={`${view === 'contractor-dash' ? 'px-6 pt-12' : 'px-6'} pb-32`}>
         <AnimatePresence mode="wait">
           {view === 'landing' && (
             <motion.div
@@ -164,7 +166,7 @@ export default function FreshApp() {
       </main>
 
       {(view !== 'landing') && (
-        <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/80 backdrop-blur-xl border-t border-border flex justify-around items-center h-24 px-6 z-40">
+        <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-xl border-t border-border flex justify-around items-center h-24 px-6 z-40 rounded-t-[2.5rem]">
           <NavButton 
             icon={<Home className="w-6 h-6" />} 
             active={view === 'owner-form' || view === 'owner-done'} 
