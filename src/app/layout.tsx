@@ -21,7 +21,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#FDB714" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
       </head>
-      <body className="font-body antialiased bg-background text-foreground overflow-x-hidden min-h-screen">
+      <body className="font-body antialiased bg-background text-foreground overflow-x-hidden min-h-screen" suppressHydrationWarning>
         {children}
       </body>
     </html>
