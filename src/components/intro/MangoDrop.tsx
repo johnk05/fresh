@@ -67,7 +67,7 @@ export function MangoDrop({ onComplete }: { onComplete: () => void }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1, transition: { delay: 0.5 } }}
             >
-              കേരളത്തിന്റെ കൊല്ലവും, നിങ്ങളുടെ വീട്ടുമുറ്റവും
+              Keralathinte vilaveduppu, Ningalude veettumuttathu
             </motion.p>
           </motion.div>
         )}
