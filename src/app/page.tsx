@@ -12,7 +12,7 @@ import { Home, ClipboardList, Map as MapIcon, User } from "lucide-react";
 
 export default function FreshApp() {
   const [showIntro, setShowIntro] = useState(true);
-  const [language, setLanguage] = useState<Language>('ml');
+  const [language, setLanguage] = useState<Language>('manglish');
   const [view, setView] = useState<'landing' | 'owner-form' | 'owner-done' | 'contractor-dash'>('landing');
 
   if (showIntro) {

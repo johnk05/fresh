@@ -34,6 +34,40 @@ export const translations = {
     back: "Back"
   },
   ml: {
+    heroTagline: "കേരളത്തിന്റെ വിളവ്, നിങ്ങളുടെ വീട്ടുമുറ്റത്ത്",
+    ctaTree: "എനിക്ക് ഒരു മാവുണ്ട്",
+    ctaOther: "ഞാൻ ഒരു കോൺട്രാക്ടർ/വാങ്ങുന്നയാളാണ്",
+    question: "നിങ്ങളുടെ പക്കൽ മാവ് ഉണ്ടോ?",
+    questionSub: "(മാമ്പഴം കിട്ടുമോ?)",
+    treeOwner: "മരത്തിന്റെ ഉടമസ്ഥൻ",
+    contractor: "കോൺട്രാക്ടർ",
+    buyer: "വാങ്ങുന്നയാൾ",
+    registerTree: "എന്റെ മാവ് രജിസ്റ്റർ ചെയ്യുക",
+    registerTreeSub: "നിങ്ങളുടെ മാവ് രജിസ്റ്റർ ചെയ്യുക",
+    name: "പേര്",
+    phone: "വാട്ട്‌സ്ആപ്പ് നമ്പർ",
+    location: "സ്ഥലം",
+    treeType: "മാവ് ഇനം",
+    estimatedQuantity: "ഏകദേശ അളവ് (kg)",
+    preferredDate: "വിളവെടുപ്പ് തീയതി",
+    notes: "കൂടുതൽ വിവരങ്ങൾ",
+    submit: "രജിസ്റ്റർ ചെയ്യുക",
+    suggestedPrice: "AI നിർദ്ദേശിക്കുന്ന വില",
+    getPricing: "AI വില പരിശോധിക്കുക",
+    distance: "ദൂരം",
+    status: "നില",
+    open: "ഓപ്പൺ",
+    bidding: "ലേലം",
+    accepted: "സ്വീകരിച്ചു",
+    contracted: "കോൺട്രാക്ട് ചെയ്തത്",
+    completed: "പൂർത്തിയായി",
+    placeBid: "ലേലം വിളിക്കുക",
+    yourQuote: "നിങ്ങളുടെ വില (₹/kg)",
+    dashboard: "ഡാഷ്‌ബോർഡ്",
+    nearbyListings: "അടുത്തുള്ള അവസരങ്ങൾ",
+    back: "തിരികെ"
+  },
+  manglish: {
     heroTagline: "Keralathinte Vila, Ningalude Veetumuttathu",
     ctaTree: "Enikk oru മാവ് undu",
     ctaOther: "Njan oru contractor/buyer aanu",
@@ -69,4 +103,4 @@ export const translations = {
   }
 };
 
-export type Language = 'en' | 'ml';
+export type Language = 'en' | 'ml' | 'manglish';
