@@ -9,7 +9,6 @@ import {
   Search, 
   Settings, 
   Plus, 
-  Layers, 
   Navigation2,
   Share2,
   CloudSun,
@@ -31,6 +30,10 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
   const [userProfile, setUserProfile] = useState<any>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>([10.8505, 76.2711]);
   const [isSharing, setIsSharing] = useState(false);
+  
+  // Dynamic top bar states
+  const [currentLocationName, setCurrentLocationName] = useState("Ernakulam, Kerala");
+  const [currentTemp, setCurrentTemp] = useState(32);
 
   useEffect(() => {
     const savedProfile = localStorage.getItem('fresh_user_profile');
@@ -40,6 +43,9 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
         setUserProfile(parsed);
         if (parsed.location) {
           setMapCenter([parsed.location.lat, parsed.location.lng]);
+        }
+        if (parsed.locationName) {
+          setCurrentLocationName(parsed.locationName);
         }
       } catch (e) {
         console.error("Failed to load profile for dashboard", e);
@@ -84,7 +90,6 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
     if (userProfile?.location) {
       setMapCenter([userProfile.location.lat, userProfile.location.lng]);
     } else {
-      // Default recenter if no location shared
       setMapCenter([10.8505, 76.2711]);
     }
   };
@@ -98,18 +103,29 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
             lat: position.coords.latitude,
             lng: position.coords.longitude
           };
+          
+          // Simulation of dynamic location naming and weather based on shared lat/lng
+          const mockNames = ["Edappally", "Kakkanad", "Vytilla", "Fort Kochi", "Aluva"];
+          const randomName = mockNames[Math.floor(Math.random() * mockNames.length)];
+          const mockLocationName = `${randomName}, Kerala`;
+          const mockTemp = Math.floor(Math.random() * (35 - 28 + 1) + 28); // 28-35C range
+
           const updatedProfile = {
             ...userProfile,
             location: newLocation,
-            locationName: "Current Shared Location"
+            locationName: mockLocationName
           };
+
           setUserProfile(updatedProfile);
           setMapCenter([newLocation.lat, newLocation.lng]);
+          setCurrentLocationName(mockLocationName);
+          setCurrentTemp(mockTemp);
+          
           localStorage.setItem('fresh_user_profile', JSON.stringify(updatedProfile));
           setIsSharing(false);
           toast({
             title: t.locationShared,
-            description: "Updating map markers...",
+            description: `Now displaying info for ${mockLocationName}`,
           });
         },
         (error) => {
@@ -136,23 +152,22 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
         />
       </div>
 
-      {/* Top Bar Overlay - Matching Reference Screenshot */}
+      {/* Top Bar Overlay - Matching Reference */}
       <div className="absolute top-6 left-4 right-4 z-[1000] flex items-center justify-between gap-3 pointer-events-none">
         <motion.div 
           whileTap={{ scale: 0.9 }}
-          onClick={() => toast({ title: "Search", description: "Search feature coming soon!" })}
           className="w-14 h-14 bg-white/95 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center cursor-pointer border border-white/50 pointer-events-auto"
         >
           <Search className="w-6 h-6 text-muted-foreground" />
         </motion.div>
         
         <div className="flex-1 bg-white/95 backdrop-blur-md h-14 rounded-full shadow-lg border border-white/50 flex items-center justify-center px-6 gap-3 pointer-events-auto overflow-hidden">
-          <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse shrink-0" />
-          <span className="font-bold text-base tracking-tight truncate">Ernakulam, Kerala</span>
+          <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shrink-0" />
+          <span className="font-bold text-sm tracking-tight truncate">{currentLocationName}</span>
           <div className="w-px h-6 bg-border/50 mx-1 shrink-0" />
-          <div className="flex items-center gap-2 shrink-0">
-            <CloudSun className="w-6 h-6 text-primary" />
-            <span className="text-sm font-bold">32°C</span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <CloudSun className="w-5 h-5 text-primary" />
+            <span className="text-xs font-bold">{currentTemp}°C</span>
           </div>
         </div>
 
@@ -165,9 +180,9 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
         </motion.div>
       </div>
 
-      {/* Floating Action Buttons (Right) - Core 5 Features */}
-      <div className="absolute right-4 top-28 z-[1000] flex flex-col gap-4">
-        {/* Feature 1: Profile Access */}
+      {/* Floating Action Buttons - Stacked per Reference */}
+      <div className="absolute right-4 top-28 z-[1000] flex flex-col gap-3">
+        {/* Profile (Blue) */}
         <motion.div 
           whileTap={{ scale: 0.9 }} 
           onClick={() => onNavigate?.('account')}
@@ -176,7 +191,7 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
           <User className="w-6 h-6" />
         </motion.div>
 
-        {/* Feature 2: Create/Add Listing */}
+        {/* Add (Green) */}
         <motion.div 
           whileTap={{ scale: 0.9 }} 
           onClick={() => onNavigate?.('owner-form')}
@@ -185,7 +200,7 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
           <Plus className="w-7 h-7" />
         </motion.div>
 
-        {/* Feature 3: Share Location */}
+        {/* Share (Yellow/Orange) */}
         <motion.div 
           whileTap={{ scale: 0.9 }} 
           onClick={handleShare}
@@ -194,24 +209,13 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
           {isSharing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Share2 className="w-6 h-6" />}
         </motion.div>
 
-        {/* Feature 4: Map Layers */}
-        <motion.div 
-          whileTap={{ scale: 0.9 }} 
-          onClick={() => toast({ title: "Map Layers", description: "Terrain view toggled." })}
-          className="w-14 h-14 bg-white text-muted-foreground rounded-full shadow-xl flex items-center justify-center cursor-pointer border border-border pointer-events-auto"
-        >
-          <Layers className="w-6 h-6" />
-        </motion.div>
-      </div>
-
-      {/* Feature 5: Recenter/Compass Button */}
-      <div className="absolute bottom-28 right-4 z-[1000]">
+        {/* Recenter (White with Yellow/Orange Arrow) */}
         <motion.div 
           whileTap={{ scale: 0.9 }}
           onClick={handleRecenter}
-          className="w-16 h-16 bg-white rounded-full shadow-2xl flex items-center justify-center cursor-pointer border-2 border-primary/20 pointer-events-auto"
+          className="w-14 h-14 bg-white text-[#FDB714] rounded-full shadow-xl flex items-center justify-center cursor-pointer border-2 border-primary/5 pointer-events-auto"
         >
-          <Navigation2 className="w-8 h-8 text-primary" />
+          <Navigation2 className="w-7 h-7 rotate-45" />
         </motion.div>
       </div>
     </div>

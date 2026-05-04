@@ -29,7 +29,7 @@ export default function MapComponent({ center, listings, userLocation }: MapProp
 
   if (!isMounted) return <div className="w-full h-full bg-muted animate-pulse" />;
 
-  // Dynamic icon creator for listings
+  // User avatar icon (Mango)
   const createMangoIcon = (name: string, distance: string, time: string) => {
     return L.divIcon({
       className: "custom-marker-container",
@@ -61,20 +61,21 @@ export default function MapComponent({ center, listings, userLocation }: MapProp
     });
   };
 
+  // 'YOU' marker matching the reference (Blue halo with mango)
   const meIcon = L.divIcon({
     className: "custom-marker-container",
     html: `
       <div class="flex flex-col items-center">
-        <div class="relative group">
-          <div class="w-10 h-10 rounded-full bg-white shadow-2xl border-[3px] border-[#3B82F6] flex items-center justify-center text-2xl overflow-hidden">
+        <div class="relative">
+          <div class="w-12 h-12 rounded-full bg-white shadow-2xl border-[3px] border-white flex items-center justify-center text-3xl overflow-hidden z-10 relative">
             🥭
           </div>
-          <div class="absolute inset-0 bg-[#3B82F6]/30 rounded-full animate-pulse scale-[1.8] -z-10"></div>
+          <div class="absolute inset-[-6px] bg-[#3B82F6]/30 rounded-full animate-pulse z-0"></div>
         </div>
-        <div class="mt-2 bg-[#3B82F6] text-white px-3 py-1 rounded-full text-[10px] font-black shadow-lg">YOU</div>
+        <div class="mt-1 bg-[#3B82F6] text-white px-3 py-0.5 rounded-full text-[9px] font-black shadow-lg uppercase tracking-tight">YOU</div>
       </div>
     `,
-    iconSize: [40, 60],
+    iconSize: [40, 70],
     iconAnchor: [20, 20],
   });
 
