@@ -17,7 +17,6 @@ import {
 import { Language, translations } from "@/lib/translations";
 import { useToast } from "@/hooks/use-toast";
 
-// Dynamically import MapComponent to avoid SSR issues with Leaflet
 const MapComponent = dynamic(() => import("./MapComponent"), { 
   ssr: false,
   loading: () => <div className="w-full h-full bg-muted animate-pulse" />
@@ -31,27 +30,41 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
   const [mapCenter, setMapCenter] = useState<[number, number]>([10.8505, 76.2711]);
   const [isSharing, setIsSharing] = useState(false);
   
-  // Dynamic top bar states
   const [currentLocationName, setCurrentLocationName] = useState("Finding location...");
   const [currentTemp, setCurrentTemp] = useState(32);
 
   useEffect(() => {
-    const savedProfile = localStorage.getItem('fresh_user_profile');
-    if (savedProfile) {
+    const savedProfileString = localStorage.getItem('fresh_user_profile');
+    let profile: any = null;
+    
+    if (savedProfileString) {
       try {
-        const parsed = JSON.parse(savedProfile);
-        setUserProfile(parsed);
-        if (parsed.location) {
-          setMapCenter([parsed.location.lat, parsed.location.lng]);
+        profile = JSON.parse(savedProfileString);
+        setUserProfile(profile);
+        if (profile.location) {
+          setMapCenter([profile.location.lat, profile.location.lng]);
         }
-        if (parsed.locationName) {
-          setCurrentLocationName(parsed.locationName);
-        } else if (parsed.name) {
-          setCurrentLocationName(`${parsed.name}'s Location`);
+        if (profile.locationName) {
+          setCurrentLocationName(profile.locationName);
         }
       } catch (e) {
-        console.error("Failed to load profile for dashboard", e);
+        console.error("Failed to load profile", e);
       }
+    }
+
+    // Try to detect location if not shared/saved
+    if (!profile?.location && "geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          setMapCenter([lat, lng]);
+          fetchLocationName(lat, lng);
+        },
+        () => {
+          setCurrentLocationName("Kerala");
+        }
+      );
     }
 
     const savedListings = localStorage.getItem('fresh_local_listings');
@@ -59,41 +72,55 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
       try {
         setListings(JSON.parse(savedListings));
       } catch (e) {
-        console.error("Failed to load listings", e);
+        setListings(getMockListings());
       }
     } else {
-      const mockListings = [
-        {
-          id: '1',
-          ownerName: 'Suresh Kumar',
-          treeType: 'Alphonso',
-          estimatedQuantityKg: 150,
-          status: 'open',
-          location: { lat: 10.8505, lng: 76.2711 },
-          distance: "2.4km",
-          time: "11h"
-        },
-        {
-          id: '2',
-          ownerName: 'Meera Nair',
-          treeType: 'Priyoor',
-          estimatedQuantityKg: 80,
-          status: 'open',
-          location: { lat: 10.8605, lng: 76.2811 },
-          distance: "1.1km",
-          time: "now"
-        }
-      ];
-      setListings(mockListings);
+      setListings(getMockListings());
     }
   }, []);
+
+  const getMockListings = () => [
+    {
+      id: '1',
+      ownerName: 'Suresh Kumar',
+      treeType: 'Alphonso',
+      estimatedQuantityKg: 150,
+      status: 'open',
+      location: { lat: 10.8505, lng: 76.2711 },
+      distance: "2.4km",
+      time: "11h"
+    },
+    {
+      id: '2',
+      ownerName: 'Meera Nair',
+      treeType: 'Priyoor',
+      estimatedQuantityKg: 80,
+      status: 'open',
+      location: { lat: 10.8605, lng: 76.2811 },
+      distance: "1.1km",
+      time: "now"
+    }
+  ];
+
+  const fetchLocationName = async (lat: number, lng: number) => {
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+      const data = await response.json();
+      const addr = data.address;
+      const hood = addr.suburb || addr.neighbourhood || addr.village || addr.city_district || addr.city || addr.town;
+      setCurrentLocationName(hood || "Current Location");
+    } catch (e) {
+      setCurrentLocationName("Shared Location");
+    }
+  };
 
   const handleRecenter = () => {
     if (userProfile?.location) {
       setMapCenter([userProfile.location.lat, userProfile.location.lng]);
-    } else {
-      // Fallback to Kochi if no user location, or stay at current center
-      setMapCenter([10.8505, 76.2711]);
+    } else if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        setMapCenter([pos.coords.latitude, pos.coords.longitude]);
+      });
     }
   };
 
@@ -102,29 +129,20 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
-          const newLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          const newLocation = { lat, lng };
           
           let locationName = "Current Location";
           try {
-            // Real Reverse Geocoding via Nominatim (OSM)
-            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${newLocation.lat}&lon=${newLocation.lng}`);
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
             const data = await response.json();
-            
-            // Extract meaningful neighborhood or city name
             const addr = data.address;
             const hood = addr.suburb || addr.neighbourhood || addr.village || addr.city_district;
             const city = addr.city || addr.town || addr.state;
-            
-            if (hood && city) {
-              locationName = `${hood}, ${city}`;
-            } else if (city) {
-              locationName = city;
-            }
+            locationName = hood ? `${hood}, ${city}` : city;
           } catch (err) {
-            console.error("Reverse geocoding failed", err);
+            console.error("Geocoding failed", err);
           }
           
           const updatedProfile = {
@@ -134,10 +152,8 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
           };
 
           setUserProfile(updatedProfile);
-          setMapCenter([newLocation.lat, newLocation.lng]);
+          setMapCenter([lat, lng]);
           setCurrentLocationName(locationName);
-          
-          // Slight temp variance simulation
           setCurrentTemp(28 + Math.floor(Math.random() * 7));
           
           localStorage.setItem('fresh_user_profile', JSON.stringify(updatedProfile));
@@ -148,7 +164,6 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
           });
         },
         (error) => {
-          console.error("Geolocation error:", error);
           setIsSharing(false);
           toast({
             variant: "destructive",
@@ -162,7 +177,6 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
 
   return (
     <div className="relative h-[85vh] -mx-6 -mt-12 overflow-hidden bg-[#E5E7EB]">
-      {/* Real Interactive Map */}
       <div className="absolute inset-0 z-0">
         <MapComponent 
           center={mapCenter} 
@@ -172,7 +186,6 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
         />
       </div>
 
-      {/* Top Bar Overlay */}
       <div className="absolute top-6 left-4 right-4 z-[1000] flex items-center justify-between gap-3 pointer-events-none">
         <motion.div 
           whileTap={{ scale: 0.9 }}
@@ -200,9 +213,7 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
         </motion.div>
       </div>
 
-      {/* Floating Action Buttons */}
       <div className="absolute right-4 top-28 z-[1000] flex flex-col gap-3">
-        {/* Profile (Blue) */}
         <motion.div 
           whileTap={{ scale: 0.9 }} 
           onClick={() => onNavigate?.('account')}
@@ -211,7 +222,6 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
           <User className="w-6 h-6" />
         </motion.div>
 
-        {/* Add (Green) */}
         <motion.div 
           whileTap={{ scale: 0.9 }} 
           onClick={() => onNavigate?.('owner-form')}
@@ -220,7 +230,6 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
           <Plus className="w-7 h-7" />
         </motion.div>
 
-        {/* Share (Yellow/Orange) */}
         <motion.div 
           whileTap={{ scale: 0.9 }} 
           onClick={handleShare}
@@ -229,7 +238,6 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
           {isSharing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Share2 className="w-6 h-6" />}
         </motion.div>
 
-        {/* Recenter (White with Yellow/Orange Arrow) */}
         <motion.div 
           whileTap={{ scale: 0.9 }}
           onClick={handleRecenter}
