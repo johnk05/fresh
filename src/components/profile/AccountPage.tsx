@@ -10,10 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Globe, CheckCircle2, Loader2, User } from "lucide-react";
 import { Language, translations } from "@/lib/translations";
 import { useToast } from "@/hooks/use-toast";
-import { useFirestore } from "@/firebase";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError } from "@/firebase/errors";
 
 interface UserProfile {
   name: string;
@@ -25,7 +21,6 @@ interface UserProfile {
 export function AccountPage({ language }: { language: Language }) {
   const t = translations[language];
   const { toast } = useToast();
-  const db = useFirestore();
   const [isHydrated, setIsHydrated] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [profile, setProfile] = useState<UserProfile>({
@@ -46,26 +41,6 @@ export function AccountPage({ language }: { language: Language }) {
     }
     setIsHydrated(true);
   }, []);
-
-  const saveToFirebase = (updatedProfile: UserProfile) => {
-    if (!db) return;
-    // Using a stable ID for demo purposes, in production this would be from Auth
-    const userId = profile.phone || "demo-user";
-    const data = {
-      ...updatedProfile,
-      updatedAt: serverTimestamp()
-    };
-    
-    setDoc(doc(db, "users", userId), data, { merge: true })
-      .catch(async () => {
-        const permissionError = new FirestorePermissionError({
-          path: `users/${userId}`,
-          operation: "update",
-          requestResourceData: data,
-        });
-        errorEmitter.emit("permission-error", permissionError);
-      });
-  };
 
   useEffect(() => {
     if (isHydrated) {
@@ -88,7 +63,6 @@ export function AccountPage({ language }: { language: Language }) {
             locationName: "Current Shared Location"
           };
           setProfile(updated);
-          saveToFirebase(updated);
           setIsSharing(false);
           toast({
             title: t.locationShared,
@@ -216,10 +190,10 @@ export function AccountPage({ language }: { language: Language }) {
           <Button 
             className="w-full bg-accent hover:bg-accent/90 text-white rounded-xl py-6 mt-4 shadow-lg shadow-accent/20"
             onClick={() => {
-              saveToFirebase(profile);
+              localStorage.setItem('fresh_user_profile', JSON.stringify(profile));
               toast({
                 title: "Profile Updated",
-                description: "Your settings have been saved.",
+                description: "Your settings have been saved locally.",
               });
             }}
           >

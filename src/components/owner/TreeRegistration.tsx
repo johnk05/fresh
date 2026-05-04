@@ -15,14 +15,9 @@ import { format } from "date-fns";
 import { CalendarIcon, Sparkles } from "lucide-react";
 import { Language, translations } from "@/lib/translations";
 import { getDynamicPricingSuggestion, TreeOwnerDynamicPricingOutput } from "@/ai/flows/tree-owner-dynamic-pricing";
-import { useFirestore } from "@/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError } from "@/firebase/errors";
 
 export function TreeRegistration({ language, onComplete }: { language: Language, onComplete: () => void }) {
   const t = translations[language];
-  const db = useFirestore();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<{
     name: string;
@@ -89,39 +84,26 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
   };
 
   const handleFinalSubmit = () => {
-    if (!db) return;
-
     const listingData = {
+      id: Math.random().toString(36).substr(2, 9),
       ownerName: formData.name,
       phone: formData.phone,
       treeType: formData.treeType,
       estimatedQuantityKg: formData.quantity,
-      preferredClearanceDate: formData.date?.toISOString().split('T')[0], // YYYY-MM-DD
-      latitude: formData.location.lat,
-      longitude: formData.location.lng,
-      address: "Kerala, India", // Simplified for MVP
-      notes: formData.notes,
-      suggestedPrice: aiPrice?.suggestedPricePerKg || null,
+      preferredClearanceDate: formData.date?.toISOString().split('T')[0],
       status: "open",
-      photoUrls: [], // Placeholder for images
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: new Date().toISOString(),
     };
 
-    addDoc(collection(db, "treeListings"), listingData)
-      .then(() => {
-        localStorage.removeItem('fresh_tree_form');
-        localStorage.removeItem('fresh_tree_step');
-        onComplete();
-      })
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: "treeListings",
-          operation: "create",
-          requestResourceData: listingData,
-        });
-        errorEmitter.emit("permission-error", permissionError);
-      });
+    // Save locally
+    const existing = localStorage.getItem('fresh_local_listings');
+    const listings = existing ? JSON.parse(existing) : [];
+    listings.push(listingData);
+    localStorage.setItem('fresh_local_listings', JSON.stringify(listings));
+
+    localStorage.removeItem('fresh_tree_form');
+    localStorage.removeItem('fresh_tree_step');
+    onComplete();
   };
 
   const steps = [

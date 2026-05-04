@@ -10,30 +10,53 @@ import { MapPin, ArrowRight, TrendingUp, Info, User } from "lucide-react";
 import { Language, translations } from "@/lib/translations";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, limit } from "firebase/firestore";
 
 export function ContractorDashboard({ language }: { language: Language }) {
   const t = translations[language];
-  const db = useFirestore();
+  const [listings, setListings] = useState<any[]>([]);
   const [userProfile, setUserProfile] = useState<any>(null);
   const mapImg = PlaceHolderImages.find(img => img.id === 'kerala-map');
 
-  const listingsQuery = useMemoFirebase(() => {
-    if (!db) return null;
-    return query(collection(db, "treeListings"), orderBy("createdAt", "desc"), limit(20));
-  }, [db]);
-
-  const { data: listings, isLoading: loading } = useCollection(listingsQuery);
-
   useEffect(() => {
-    const saved = localStorage.getItem('fresh_user_profile');
-    if (saved) {
+    // Load profile
+    const savedProfile = localStorage.getItem('fresh_user_profile');
+    if (savedProfile) {
       try {
-        setUserProfile(JSON.parse(saved));
+        setUserProfile(JSON.parse(savedProfile));
       } catch (e) {
         console.error("Failed to load profile for dashboard", e);
       }
+    }
+
+    // Load local listings
+    const savedListings = localStorage.getItem('fresh_local_listings');
+    if (savedListings) {
+      try {
+        setListings(JSON.parse(savedListings));
+      } catch (e) {
+        console.error("Failed to load listings", e);
+      }
+    } else {
+      // Mock data if empty
+      const mockListings = [
+        {
+          id: '1',
+          ownerName: 'Suresh Kumar',
+          treeType: 'Alphonso',
+          estimatedQuantityKg: 150,
+          status: 'open',
+          location: { lat: 10.8505, lng: 76.2711 }
+        },
+        {
+          id: '2',
+          ownerName: 'Meera Nair',
+          treeType: 'Priyoor',
+          estimatedQuantityKg: 80,
+          status: 'open',
+          location: { lat: 10.8605, lng: 76.2811 }
+        }
+      ];
+      setListings(mockListings);
     }
   }, []);
 
@@ -52,8 +75,8 @@ export function ContractorDashboard({ language }: { language: Language }) {
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/30 pointer-events-none" />
         
-        {/* Real-time Listing Pins */}
-        {listings?.map((l, i) => (
+        {/* Listing Pins */}
+        {listings.map((l, i) => (
           <motion.div
             key={l.id}
             className="absolute z-10"
@@ -61,8 +84,8 @@ export function ContractorDashboard({ language }: { language: Language }) {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: i * 0.1, type: "spring" }}
             style={{ 
-              top: `${20 + (Math.random() * 60)}%`, 
-              left: `${20 + (Math.random() * 60)}%` 
+              top: `${30 + (i * 10)}%`, 
+              left: `${40 + (i * 15)}%` 
             }}
           >
             <div className="relative group cursor-pointer">
@@ -97,7 +120,7 @@ export function ContractorDashboard({ language }: { language: Language }) {
                   <User className="w-8 h-8 text-white" />
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary rounded-full border-2 border-white flex items-center justify-center shadow-lg">
-                  <Badge className="bg-primary text-white p-0 text-[8px] border-none">ME</Badge>
+                  <Badge className="bg-primary text-white p-0 text-[8px] border-none px-1">ME</Badge>
                 </div>
               </div>
             </div>
@@ -114,7 +137,7 @@ export function ContractorDashboard({ language }: { language: Language }) {
               <p className="text-lg font-bold leading-none tracking-tight">Active Harvests</p>
             </div>
           </div>
-          <Badge className="bg-accent text-white font-bold py-1 px-3 rounded-full">{listings?.length || 0} listings</Badge>
+          <Badge className="bg-accent text-white font-bold py-1 px-3 rounded-full">{listings.length} listings</Badge>
         </div>
       </div>
 
@@ -124,9 +147,7 @@ export function ContractorDashboard({ language }: { language: Language }) {
           {t.nearbyListings}
         </h2>
         
-        {loading ? (
-          <div className="text-center p-12 text-muted-foreground">Loading harvests...</div>
-        ) : !listings || listings.length === 0 ? (
+        {listings.length === 0 ? (
           <div className="text-center p-12 bg-muted/20 rounded-3xl border-2 border-dashed border-muted">
              <p className="font-medium">No harvests yet.</p>
              <p className="text-sm">Tree owners will list them soon!</p>
