@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "kerala-map",
+      "description": "Satellite view of Kerala geography for the harvest map background",
+      "imageUrl": "https://picsum.photos/seed/keralamap/600/400",
+      "imageHint": "satellite map"
+    }
+  ]
 }
