@@ -32,7 +32,7 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
   const [isSharing, setIsSharing] = useState(false);
   
   // Dynamic top bar states
-  const [currentLocationName, setCurrentLocationName] = useState("Ernakulam, Kerala");
+  const [currentLocationName, setCurrentLocationName] = useState("Finding location...");
   const [currentTemp, setCurrentTemp] = useState(32);
 
   useEffect(() => {
@@ -46,6 +46,8 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
         }
         if (parsed.locationName) {
           setCurrentLocationName(parsed.locationName);
+        } else if (parsed.name) {
+          setCurrentLocationName(`${parsed.name}'s Location`);
         }
       } catch (e) {
         console.error("Failed to load profile for dashboard", e);
@@ -104,12 +106,11 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
             lng: position.coords.longitude
           };
           
-          // Simulation of dynamic location naming and weather based on shared lat/lng
-          const mockNames = ["Edappally", "Kakkanad", "Vytilla", "Fort Kochi", "Aluva"];
-          const randomName = mockNames[Math.floor(Math.random() * mockNames.length)];
-          const mockLocationName = `${randomName}, Kerala`;
-          const mockTemp = Math.floor(Math.random() * (35 - 28 + 1) + 28); // 28-35C range
-
+          // Simulation of neighborhood naming
+          const neighborhoods = ["Edappally", "Kakkanad", "Vytilla", "Fort Kochi", "Aluva", "Palarivattom"];
+          const randomHood = neighborhoods[Math.floor(Math.random() * neighborhoods.length)];
+          const mockLocationName = `${randomHood}, Kochi`;
+          
           const updatedProfile = {
             ...userProfile,
             location: newLocation,
@@ -119,13 +120,12 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
           setUserProfile(updatedProfile);
           setMapCenter([newLocation.lat, newLocation.lng]);
           setCurrentLocationName(mockLocationName);
-          setCurrentTemp(mockTemp);
           
           localStorage.setItem('fresh_user_profile', JSON.stringify(updatedProfile));
           setIsSharing(false);
           toast({
             title: t.locationShared,
-            description: `Now displaying info for ${mockLocationName}`,
+            description: `Now sharing location in ${mockLocationName}`,
           });
         },
         (error) => {
@@ -149,10 +149,11 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
           center={mapCenter} 
           listings={listings} 
           userLocation={userProfile?.location ? [userProfile.location.lat, userProfile.location.lng] : null}
+          userName={userProfile?.name || "YOU"}
         />
       </div>
 
-      {/* Top Bar Overlay - Matching Reference */}
+      {/* Top Bar Overlay - Matching Reference Image */}
       <div className="absolute top-6 left-4 right-4 z-[1000] flex items-center justify-between gap-3 pointer-events-none">
         <motion.div 
           whileTap={{ scale: 0.9 }}
@@ -161,18 +162,18 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
           <Search className="w-6 h-6 text-muted-foreground" />
         </motion.div>
         
-        <div className="flex-1 bg-white/95 backdrop-blur-md h-14 rounded-full shadow-lg border border-white/50 flex items-center justify-center px-6 gap-3 pointer-events-auto overflow-hidden">
-          <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shrink-0" />
-          <span className="font-bold text-sm tracking-tight truncate">{currentLocationName}</span>
-          <div className="w-px h-6 bg-border/50 mx-1 shrink-0" />
-          <div className="flex items-center gap-1.5 shrink-0">
-            <CloudSun className="w-5 h-5 text-primary" />
-            <span className="text-xs font-bold">{currentTemp}°C</span>
+        <div className="flex-1 bg-white/95 backdrop-blur-md h-14 rounded-full shadow-lg border border-white/50 flex items-center px-6 gap-3 pointer-events-auto overflow-hidden">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#10B981] shadow-[0_0_8px_rgba(16,185,129,0.8)] shrink-0" />
+          <span className="font-bold text-sm tracking-tight truncate flex-1">{currentLocationName}</span>
+          <div className="w-px h-6 bg-border/50 shrink-0" />
+          <div className="flex items-center gap-1.5 shrink-0 ml-2">
+            <CloudSun className="w-5 h-5 text-[#FDB714]" />
+            <span className="text-sm font-bold">{currentTemp}°C</span>
           </div>
         </div>
 
         <motion.div 
-          whileTap={{ scale: 0.9 }}
+          whileTap={{ scale: 0.9 }} 
           onClick={() => onNavigate?.('account')}
           className="w-14 h-14 bg-white/95 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center cursor-pointer border border-white/50 pointer-events-auto"
         >
@@ -180,7 +181,7 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
         </motion.div>
       </div>
 
-      {/* Floating Action Buttons - Stacked per Reference */}
+      {/* Floating Action Buttons */}
       <div className="absolute right-4 top-28 z-[1000] flex flex-col gap-3">
         {/* Profile (Blue) */}
         <motion.div 

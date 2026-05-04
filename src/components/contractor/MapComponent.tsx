@@ -10,6 +10,7 @@ interface MapProps {
   center: [number, number];
   listings: any[];
   userLocation: [number, number] | null;
+  userName?: string;
 }
 
 function RecenterMap({ center }: { center: [number, number] }) {
@@ -20,7 +21,7 @@ function RecenterMap({ center }: { center: [number, number] }) {
   return null;
 }
 
-export default function MapComponent({ center, listings, userLocation }: MapProps) {
+export default function MapComponent({ center, listings, userLocation, userName = "YOU" }: MapProps) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -72,7 +73,9 @@ export default function MapComponent({ center, listings, userLocation }: MapProp
           </div>
           <div class="absolute inset-[-6px] bg-[#3B82F6]/30 rounded-full animate-pulse z-0"></div>
         </div>
-        <div class="mt-1 bg-[#3B82F6] text-white px-3 py-0.5 rounded-full text-[9px] font-black shadow-lg uppercase tracking-tight">YOU</div>
+        <div class="mt-1 bg-[#3B82F6] text-white px-3 py-0.5 rounded-full text-[9px] font-black shadow-lg uppercase tracking-tight">
+          ${userName === "YOU" ? "YOU" : userName.split(' ')[0]}
+        </div>
       </div>
     `,
     iconSize: [40, 70],
