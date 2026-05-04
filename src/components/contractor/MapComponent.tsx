@@ -69,11 +69,13 @@ export default function MapComponent({ center, listings, userLocation }: MapProp
       <RecenterMap center={center} />
       
       {listings.map((l) => (
-        <Marker 
-          key={l.id} 
-          position={[l.location.lat, l.location.lng]} 
-          icon={mangoIcon}
-        />
+        l.location && typeof l.location.lat === 'number' && (
+          <Marker 
+            key={l.id} 
+            position={[l.location.lat, l.location.lng]} 
+            icon={mangoIcon}
+          />
+        )
       ))}
 
       {userLocation && (

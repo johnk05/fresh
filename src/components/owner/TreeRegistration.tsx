@@ -91,6 +91,7 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
       treeType: formData.treeType,
       estimatedQuantityKg: formData.quantity,
       preferredClearanceDate: formData.date?.toISOString().split('T')[0],
+      location: formData.location,
       status: "open",
       createdAt: new Date().toISOString(),
     };

@@ -21,6 +21,7 @@ export default function FreshApp() {
   const [showIntro, setShowIntro] = useState(true);
   const [language, setLanguage] = useState<Language>('manglish');
   const [view, setView] = useState<AppView>('landing');
+  const [isReturningUser, setIsReturningUser] = useState(false);
 
   useEffect(() => {
     const savedView = localStorage.getItem('fresh_view');
@@ -30,7 +31,18 @@ export default function FreshApp() {
     if (savedLang) setLanguage(savedLang as any);
     
     if (savedProfile) {
-      setView('contractor-dash');
+      try {
+        const parsed = JSON.parse(savedProfile);
+        // Only consider returning user if they have basic info
+        if (parsed.name || parsed.phone) {
+          setIsReturningUser(true);
+          setView('contractor-dash');
+        } else {
+          setView('landing');
+        }
+      } catch (e) {
+        setView('landing');
+      }
     } else if (savedView) {
       setView(savedView as any);
     } else {
@@ -62,7 +74,7 @@ export default function FreshApp() {
   return (
     <div className="max-w-md mx-auto relative min-h-screen">
       {/* Conditionally hide standard header for the full-screen map dashboard */}
-      {view !== 'contractor-dash' && (
+      {view !== 'contractor-dash' && view !== 'listings' && (
         <header className="p-6 pt-12">
           <div className="flex justify-between items-center">
             <motion.h1 
@@ -77,8 +89,8 @@ export default function FreshApp() {
         </header>
       )}
 
-      {/* Adjust main padding for the full-screen map view */}
-      <main className={`${view === 'contractor-dash' ? 'px-6 pt-12' : 'px-6'} pb-32`}>
+      {/* Adjust main padding for the full-screen views */}
+      <main className={`${(view === 'contractor-dash' || view === 'listings') ? 'px-6 pt-12' : 'px-6'} pb-32`}>
         <AnimatePresence mode="wait">
           {view === 'landing' && (
             <motion.div
@@ -167,26 +179,33 @@ export default function FreshApp() {
 
       {(view !== 'landing') && (
         <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-xl border-t border-border flex justify-around items-center h-24 px-6 z-40 rounded-t-[2.5rem]">
-          <NavButton 
-            icon={<Home className="w-6 h-6" />} 
-            active={view === 'owner-form' || view === 'owner-done'} 
-            onClick={() => setView('owner-form')} 
-          />
+          {!isReturningUser && (
+            <NavButton 
+              icon={<Home className="w-6 h-6" />} 
+              active={view === 'owner-form' || view === 'owner-done'} 
+              onClick={() => setView('owner-form')} 
+            />
+          )}
+          
           <NavButton 
             icon={<MapIcon className="w-6 h-6" />} 
             active={view === 'contractor-dash'} 
             onClick={() => setView('contractor-dash')} 
           />
+          
           <NavButton 
             icon={<ClipboardList className="w-6 h-6" />} 
             active={view === 'listings'} 
             onClick={() => setView('listings')} 
           />
-          <NavButton 
-            icon={<User className="w-6 h-6" />} 
-            active={view === 'account'} 
-            onClick={() => setView('account')} 
-          />
+          
+          {!isReturningUser && (
+            <NavButton 
+              icon={<User className="w-6 h-6" />} 
+              active={view === 'account'} 
+              onClick={() => setView('account')} 
+            />
+          )}
         </nav>
       )}
 
