@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -11,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Camera, MapPin, Sparkles, CheckCircle2 } from "lucide-react";
+import { CalendarIcon, MapPin, Sparkles } from "lucide-react";
 import { Language, translations } from "@/lib/translations";
 import { getDynamicPricingSuggestion, TreeOwnerDynamicPricingOutput } from "@/ai/flows/tree-owner-dynamic-pricing";
 
@@ -37,11 +38,38 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
   });
   const [aiPrice, setAiPrice] = useState<TreeOwnerDynamicPricingOutput | null>(null);
   const [isPricingLoading, setIsPricingLoading] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
+  // Load persistent state
   useEffect(() => {
-    // Defer dynamic date setting to after hydration to prevent mismatches
-    setFormData(prev => ({ ...prev, date: new Date() }));
+    const savedData = localStorage.getItem('fresh_tree_form');
+    const savedStep = localStorage.getItem('fresh_tree_step');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        if (parsed.date) parsed.date = new Date(parsed.date);
+        setFormData(parsed);
+      } catch (e) {
+        console.error("Failed to parse saved form data", e);
+      }
+    }
+    if (savedStep) setStep(parseInt(savedStep));
+    
+    // If no date was saved, initialize with current date
+    if (!savedData || !JSON.parse(savedData).date) {
+      setFormData(prev => ({ ...prev, date: new Date() }));
+    }
+    
+    setIsHydrated(true);
   }, []);
+
+  // Save state on change
+  useEffect(() => {
+    if (isHydrated) {
+      localStorage.setItem('fresh_tree_form', JSON.stringify(formData));
+      localStorage.setItem('fresh_tree_step', step.toString());
+    }
+  }, [formData, step, isHydrated]);
 
   const handlePricing = async () => {
     setIsPricingLoading(true);
@@ -180,6 +208,8 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
     )}
   ];
 
+  if (!isHydrated) return null;
+
   return (
     <Card className="w-full max-w-md mx-auto overflow-hidden border-none shadow-xl">
       <CardHeader className="bg-primary/10">
@@ -211,8 +241,13 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
           <Button 
             className="flex-1 bg-accent hover:bg-accent/90 text-white" 
             onClick={() => {
-              if (step < 4) setStep(step + 1);
-              else onComplete();
+              if (step < 4) {
+                setStep(step + 1);
+              } else {
+                localStorage.removeItem('fresh_tree_form');
+                localStorage.removeItem('fresh_tree_step');
+                onComplete();
+              }
             }}
           >
             {step === 4 ? t.submit : "Continue"}

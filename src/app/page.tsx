@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MangoDrop } from "@/components/intro/MangoDrop";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { RoleSelector } from "@/components/RoleSelector";
@@ -11,12 +12,44 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Home, ClipboardList, Map as MapIcon, User } from "lucide-react";
 
 export default function FreshApp() {
+  const [isHydrated, setIsHydrated] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
   const [language, setLanguage] = useState<Language>('manglish');
   const [view, setView] = useState<'landing' | 'owner-form' | 'owner-done' | 'contractor-dash'>('landing');
 
+  // Load state from localStorage on mount
+  useEffect(() => {
+    const savedView = localStorage.getItem('fresh_view');
+    const savedLang = localStorage.getItem('fresh_lang');
+    const hasSeenIntro = localStorage.getItem('fresh_seen_intro');
+
+    if (savedView) setView(savedView as any);
+    if (savedLang) setLanguage(savedLang as any);
+    if (hasSeenIntro === 'true') setShowIntro(false);
+    
+    setIsHydrated(true);
+  }, []);
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    if (isHydrated) {
+      localStorage.setItem('fresh_view', view);
+      localStorage.setItem('fresh_lang', language);
+    }
+  }, [view, language, isHydrated]);
+
+  const handleIntroComplete = () => {
+    setShowIntro(false);
+    localStorage.setItem('fresh_seen_intro', 'true');
+  };
+
+  // Prevent hydration flash
+  if (!isHydrated) {
+    return <div className="min-h-screen bg-background" />;
+  }
+
   if (showIntro) {
-    return <MangoDrop onComplete={() => setShowIntro(false)} />;
+    return <MangoDrop onComplete={handleIntroComplete} />;
   }
 
   return (
@@ -75,7 +108,11 @@ export default function FreshApp() {
               <h2 className="text-2xl font-bold">Successfully Listed!</h2>
               <p className="text-muted-foreground">Local contractors will be notified on WhatsApp shortly.</p>
               <button 
-                onClick={() => setView('landing')}
+                onClick={() => {
+                  localStorage.removeItem('fresh_tree_form');
+                  localStorage.removeItem('fresh_tree_step');
+                  setView('owner-form');
+                }}
                 className="text-primary font-bold hover:underline"
               >
                 Register another tree
@@ -96,9 +133,9 @@ export default function FreshApp() {
       </main>
 
       {/* Navigation - Thumb Friendly */}
-      {(view === 'contractor-dash' || view === 'owner-done') && (
+      {(view === 'contractor-dash' || view === 'owner-done' || view === 'owner-form') && (
         <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/80 backdrop-blur-xl border-t border-border flex justify-around items-center h-20 px-6 z-40">
-          <NavButton icon={<Home className="w-6 h-6" />} active={view === 'landing'} onClick={() => setView('landing')} />
+          <NavButton icon={<Home className="w-6 h-6" />} active={view === 'landing' || view === 'owner-form' || view === 'owner-done'} onClick={() => setView('landing')} />
           <NavButton icon={<MapIcon className="w-6 h-6" />} active={view === 'contractor-dash'} onClick={() => setView('contractor-dash')} />
           <NavButton icon={<ClipboardList className="w-6 h-6" />} active={false} onClick={() => {}} />
           <NavButton icon={<User className="w-6 h-6" />} active={false} onClick={() => {}} />
