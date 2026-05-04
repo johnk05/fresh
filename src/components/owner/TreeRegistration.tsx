@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,17 +18,30 @@ import { getDynamicPricingSuggestion, TreeOwnerDynamicPricingOutput } from "@/ai
 export function TreeRegistration({ language, onComplete }: { language: Language, onComplete: () => void }) {
   const t = translations[language];
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    phone: string;
+    treeType: string;
+    quantity: number;
+    date: Date | null;
+    location: { lat: number; lng: number };
+    notes: string;
+  }>({
     name: "",
     phone: "",
     treeType: "Alphonso",
     quantity: 50,
-    date: new Date(),
+    date: null,
     location: { lat: 10.8505, lng: 76.2711 },
     notes: ""
   });
   const [aiPrice, setAiPrice] = useState<TreeOwnerDynamicPricingOutput | null>(null);
   const [isPricingLoading, setIsPricingLoading] = useState(false);
+
+  useEffect(() => {
+    // Defer dynamic date setting to after hydration to prevent mismatches
+    setFormData(prev => ({ ...prev, date: new Date() }));
+  }, []);
 
   const handlePricing = async () => {
     setIsPricingLoading(true);
@@ -112,13 +125,13 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
             <PopoverTrigger asChild>
               <Button variant="outline" className="w-full justify-start text-left font-normal mt-1">
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {formData.date ? format(formData.date, "PPP") : <span>Pick a date</span>}
+                {formData.date ? format(formData.date, "PPP") : <span>Loading date...</span>}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
               <Calendar
                 mode="single"
-                selected={formData.date}
+                selected={formData.date || undefined}
                 onSelect={(d) => d && setFormData({...formData, date: d})}
                 initialFocus
               />
