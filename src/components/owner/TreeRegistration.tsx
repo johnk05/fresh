@@ -41,6 +41,7 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
   const [isPricingLoading, setIsPricingLoading] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [locationStatus, setLocationStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
@@ -141,6 +142,9 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
   };
 
   const handleFinalSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    
     const listingData = {
       name: formData.name,
       phone_number: formData.phone,
@@ -174,6 +178,7 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
       }
     } catch (error) {
       console.error("Error saving to Supabase:", error);
+      setIsSubmitting(false);
       // Fallback to local storage if needed, or handle error
     }
 
@@ -185,6 +190,7 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
 
     localStorage.removeItem('fresh_tree_form');
     localStorage.removeItem('fresh_tree_step');
+    setIsSubmitting(false);
     onComplete();
   };
 
@@ -302,6 +308,7 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
           )}
           <Button 
             className="flex-1 bg-accent hover:bg-accent/90 text-white" 
+            disabled={isSubmitting}
             onClick={() => {
               if (step < 2) {
                 setStep(step + 1);
@@ -310,7 +317,14 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
               }
             }}
           >
-            {step === 2 ? t.submit : "Continue"}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              step === 2 ? t.submit : "Continue"
+            )}
           </Button>
         </div>
       </CardContent>
