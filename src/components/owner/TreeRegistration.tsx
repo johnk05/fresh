@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Sparkles } from "lucide-react";
+import { CalendarIcon, Sparkles, MapPin, Loader2 } from "lucide-react";
 import { Language, translations } from "@/lib/translations";
 import { getDynamicPricingSuggestion, TreeOwnerDynamicPricingOutput } from "@/ai/flows/tree-owner-dynamic-pricing";
 import { supabase } from "@/lib/supabase";
@@ -39,6 +39,8 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
   });
   const [aiPrice, setAiPrice] = useState<TreeOwnerDynamicPricingOutput | null>(null);
   const [isPricingLoading, setIsPricingLoading] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationStatus, setLocationStatus] = useState("");
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
@@ -113,6 +115,31 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
     }
   };
 
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus("Geolocation not supported");
+      return;
+    }
+    setIsLocating(true);
+    setLocationStatus("Locating...");
+    
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setFormData(prev => ({
+          ...prev,
+          location: { lat: pos.coords.latitude, lng: pos.coords.longitude }
+        }));
+        setLocationStatus("Location updated!");
+        setIsLocating(false);
+      },
+      (err) => {
+        setLocationStatus("Failed to get location");
+        setIsLocating(false);
+      },
+      { timeout: 10000 }
+    );
+  };
+
   const handleFinalSubmit = async () => {
     const listingData = {
       name: formData.name,
@@ -181,6 +208,31 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
             placeholder="+91 9876543210"
             className="mt-1"
           />
+        </div>
+        <div className="pt-2">
+          <Label>Current Location (Current Location)</Label>
+          <div className="flex items-center gap-2 mt-2">
+            <Button 
+              type="button"
+              variant="outline" 
+              size="sm"
+              onClick={handleGetLocation}
+              disabled={isLocating}
+              className="flex-1 border-primary/30 hover:bg-primary/5 h-10"
+            >
+              {isLocating ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <MapPin className="w-4 h-4 mr-2 text-primary" />
+              )}
+              {isLocating ? "Locating..." : "Use My Current Location"}
+            </Button>
+          </div>
+          {locationStatus && (
+            <p className={`text-xs mt-1.5 ${locationStatus.includes('Failed') ? 'text-destructive' : 'text-primary font-medium'}`}>
+              {locationStatus} {formData.location.lat.toFixed(4)}, {formData.location.lng.toFixed(4)}
+            </p>
+          )}
         </div>
       </div>
     )},
