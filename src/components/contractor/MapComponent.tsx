@@ -2,15 +2,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMap, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { Phone, Navigation, ExternalLink } from "lucide-react";
 
 interface MapProps {
   center: [number, number];
   listings: any[];
   userLocation: [number, number] | null;
   userName?: string;
+  onInterest?: (listingId: string) => void;
 }
 
 function RecenterMap({ center }: { center: [number, number] }) {
@@ -23,7 +25,7 @@ function RecenterMap({ center }: { center: [number, number] }) {
   return null;
 }
 
-export default function MapComponent({ center, listings, userLocation, userName = "YOU" }: MapProps) {
+export default function MapComponent({ center, listings, userLocation, userName = "YOU", onInterest }: MapProps) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -31,6 +33,11 @@ export default function MapComponent({ center, listings, userLocation, userName 
   }, []);
 
   if (!isMounted) return <div className="w-full h-full bg-muted animate-pulse" />;
+
+  const handleNavigate = (listingId: string, lat: number, lng: number) => {
+    if (onInterest) onInterest(listingId);
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+  };
 
   // User avatar icon (Mango) for listings
   const createMangoIcon = (name: string, distance: string, time: string) => {
@@ -93,8 +100,38 @@ export default function MapComponent({ center, listings, userLocation, userName 
           <Marker 
             key={l.id} 
             position={[l.location.lat, l.location.lng]} 
-            icon={createMangoIcon(l.ownerName || 'Owner', l.distance || '??km', l.time || 'now')}
-          />
+            icon={createMangoIcon(l.ownerName || l.name || 'Owner', l.distance || '??km', l.time || 'now')}
+          >
+            <Popup className="custom-map-popup">
+              <div className="p-2 min-w-[200px] space-y-3">
+                <div className="flex items-center justify-between border-b pb-2">
+                  <h3 className="font-bold text-lg text-accent m-0">{l.ownerName || l.name}</h3>
+                  <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-[10px] font-bold uppercase">{l.treeType}</span>
+                </div>
+                
+                <div className="space-y-2 py-1">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Phone className="w-4 h-4 text-primary" />
+                    <a href={`tel:${l.phone}`} className="hover:text-primary transition-colors font-medium">
+                      {l.phone || "No phone"}
+                    </a>
+                  </div>
+                  <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded-lg">
+                    <p>Estimated: <span className="font-bold text-accent">{l.estimatedQuantityKg} kg</span></p>
+                    {l.notes && <p className="mt-1 italic">"{l.notes}"</p>}
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => handleNavigate(l.id, l.location.lat, l.location.lng)}
+                  className="w-full bg-primary hover:bg-primary/90 text-white py-2.5 rounded-xl flex items-center justify-center gap-2 font-bold text-sm shadow-lg shadow-primary/20 transition-all active:scale-95"
+                >
+                  <Navigation className="w-4 h-4" />
+                  Google Maps Vazhi Pokuka
+                </button>
+              </div>
+            </Popup>
+          </Marker>
         )
       ))}
 

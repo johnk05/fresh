@@ -8,40 +8,55 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, ArrowRight, TrendingUp, Info } from "lucide-react";
 import { Language, translations } from "@/lib/translations";
+import { supabase } from "@/lib/supabase";
 
 export function ListingsView({ language }: { language: Language }) {
   const t = translations[language];
   const [listings, setListings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedListings = localStorage.getItem('fresh_local_listings');
-    if (savedListings) {
+    async function fetchListings() {
       try {
-        setListings(JSON.parse(savedListings));
-      } catch (e) {
-        console.error("Failed to load listings", e);
-      }
-    } else {
-      const mockListings = [
-        {
-          id: '1',
-          ownerName: 'Suresh Kumar',
-          treeType: 'Alphonso',
-          estimatedQuantityKg: 150,
-          status: 'open',
-          location: { lat: 10.8505, lng: 76.2711 }
-        },
-        {
-          id: '2',
-          ownerName: 'Meera Nair',
-          treeType: 'Priyoor',
-          estimatedQuantityKg: 80,
-          status: 'open',
-          location: { lat: 10.8605, lng: 76.2811 }
+        const { data, error } = await supabase
+          .from('tree_listings')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          // Map snake_case from DB to camelCase used in UI
+          const mapped = data.map(l => ({
+            id: l.id,
+            ownerName: l.name,
+            treeType: l.tree_type,
+            estimatedQuantityKg: l.quantity,
+            status: l.status,
+            location: l.location,
+            phone: l.phone_number
+          }));
+          setListings(mapped);
+        } else {
+          // Fallback to local storage if no DB data
+          const savedListings = localStorage.getItem('fresh_local_listings');
+          if (savedListings) {
+            setListings(JSON.parse(savedListings));
+          }
         }
-      ];
-      setListings(mockListings);
+      } catch (e) {
+        console.error("Failed to load listings from Supabase", e);
+        // Fallback to local storage
+        const savedListings = localStorage.getItem('fresh_local_listings');
+        if (savedListings) {
+          setListings(JSON.parse(savedListings));
+        }
+      } finally {
+        setLoading(false);
+      }
     }
+
+    fetchListings();
   }, []);
 
   return (

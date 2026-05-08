@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Language, translations } from "@/lib/translations";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 const MapComponent = dynamic(() => import("./MapComponent"), { 
   ssr: false,
@@ -34,6 +35,52 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
   const [currentTemp, setCurrentTemp] = useState(32);
 
   useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('tree_listings')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          const formatted = data.map(l => ({
+            id: l.id,
+            ownerName: l.name,
+            phone: l.phone_number,
+            treeType: l.tree_type,
+            estimatedQuantityKg: l.quantity,
+            status: l.status,
+            location: l.location,
+            distance: "??km",
+            time: "now"
+          }));
+          setListings(formatted);
+        } else {
+          setListings(getMockListings());
+        }
+      } catch (e) {
+        console.error("Supabase fetch error:", e);
+        const savedListings = localStorage.getItem('fresh_local_listings');
+        if (savedListings) {
+          try {
+            const local = JSON.parse(savedListings);
+            setListings(local.map((l: any) => ({
+              ...l,
+              ownerName: l.name || l.ownerName || 'Owner'
+            })));
+          } catch (e) {
+            setListings(getMockListings());
+          }
+        } else {
+          setListings(getMockListings());
+        }
+      }
+    };
+
+    fetchListings();
+
     const savedProfileString = localStorage.getItem('fresh_user_profile');
     let profile: any = null;
     
@@ -65,17 +112,6 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
           setCurrentLocationName("Kerala");
         }
       );
-    }
-
-    const savedListings = localStorage.getItem('fresh_local_listings');
-    if (savedListings) {
-      try {
-        setListings(JSON.parse(savedListings));
-      } catch (e) {
-        setListings(getMockListings());
-      }
-    } else {
-      setListings(getMockListings());
     }
   }, []);
 
@@ -175,6 +211,24 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
     }
   };
 
+  const handleInterest = async (listingId: string) => {
+    try {
+      const { error } = await supabase
+        .from('tree_listings')
+        .update({ status: 'interested' })
+        .eq('id', listingId);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Interest Noted",
+        description: "The owner has been notified that you are navigating to their location.",
+      });
+    } catch (e) {
+      console.error("Interest update error:", e);
+    }
+  };
+
   return (
     <div className="relative h-[85vh] -mx-6 -mt-12 overflow-hidden bg-[#E5E7EB]">
       <div className="absolute inset-0 z-0">
@@ -183,6 +237,7 @@ export function ContractorDashboard({ language, onNavigate }: { language: Langua
           listings={listings} 
           userLocation={userProfile?.location ? [userProfile.location.lat, userProfile.location.lng] : null}
           userName={userProfile?.name || "YOU"}
+          onInterest={handleInterest}
         />
       </div>
 

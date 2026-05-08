@@ -35,18 +35,12 @@ export default function FreshApp() {
         const parsed = JSON.parse(savedProfile);
         if (parsed.name || parsed.phone) {
           setIsReturningUser(true);
-          setView('contractor-dash');
-        } else {
-          setView('landing');
         }
-      } catch (e) {
-        setView('landing');
-      }
-    } else if (savedView) {
-      setView(savedView as any);
-    } else {
-      setView('landing');
+      } catch (e) {}
     }
+    
+    // Always start at landing view when re-entering, but keep track of profile
+    setView('landing');
     
     setIsHydrated(true);
   }, []);
@@ -176,13 +170,11 @@ export default function FreshApp() {
 
       {(view !== 'landing') && (
         <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-xl border-t border-border/50 flex justify-around items-end h-28 px-8 z-40 rounded-t-[3rem] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
-          {!isReturningUser && (
-            <NavButton 
-              icon={<Home className="w-6 h-6" />} 
-              active={view === 'owner-form' || view === 'owner-done'} 
-              onClick={() => setView('owner-form')} 
-            />
-          )}
+          <NavButton 
+            icon={<Home className="w-6 h-6" />} 
+            active={view === 'owner-form' || view === 'owner-done'} 
+            onClick={() => setView('owner-form')} 
+          />
           
           <NavButton 
             icon={<MapIcon className="w-7 h-7" />} 
@@ -196,13 +188,11 @@ export default function FreshApp() {
             onClick={() => setView('listings')} 
           />
           
-          {!isReturningUser && (
-            <NavButton 
-              icon={<User className="w-6 h-6" />} 
-              active={view === 'account'} 
-              onClick={() => setView('account')} 
-            />
-          )}
+          <NavButton 
+            icon={<User className="w-6 h-6" />} 
+            active={view === 'account'} 
+            onClick={() => setView('account')} 
+          />
         </nav>
       )}
 

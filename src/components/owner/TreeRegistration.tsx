@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { CalendarIcon, Sparkles } from "lucide-react";
 import { Language, translations } from "@/lib/translations";
 import { getDynamicPricingSuggestion, TreeOwnerDynamicPricingOutput } from "@/ai/flows/tree-owner-dynamic-pricing";
+import { supabase } from "@/lib/supabase";
 
 export function TreeRegistration({ language, onComplete }: { language: Language, onComplete: () => void }) {
   const t = translations[language];
@@ -43,17 +44,46 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
   useEffect(() => {
     const savedData = localStorage.getItem('fresh_tree_form');
     const savedStep = localStorage.getItem('fresh_tree_step');
+    const savedProfile = localStorage.getItem('fresh_user_profile');
+    
+    let initialData = { ...formData };
+    
+    if (savedProfile) {
+      try {
+        const profile = JSON.parse(savedProfile);
+        initialData.name = profile.name || "";
+        initialData.phone = profile.phone || "";
+        if (profile.location) {
+          initialData.location = profile.location;
+        }
+      } catch (e) {}
+    }
+
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
         if (parsed.date) parsed.date = new Date(parsed.date);
-        setFormData(parsed);
+        initialData = { ...initialData, ...parsed };
       } catch (e) {
         console.error("Failed to parse saved form data", e);
       }
     }
-    if (savedStep) setStep(parseInt(savedStep));
-    if (!formData.date) setFormData(prev => ({ ...prev, date: new Date() }));
+
+    setFormData(initialData);
+
+    if (savedStep) {
+      const parsedStep = parseInt(savedStep);
+      setStep(Math.min(parsedStep, 2)); // Cap at current max steps
+    } else if (savedProfile) {
+      try {
+        const profile = JSON.parse(savedProfile);
+        if (profile.name && profile.phone) {
+          setStep(2); // Skip Step 1 if profile is already set
+        }
+      } catch (e) {}
+    }
+
+    if (!initialData.date) setFormData(prev => ({ ...prev, date: new Date() }));
     setIsHydrated(true);
   }, []);
 
@@ -83,23 +113,47 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
     }
   };
 
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = async () => {
     const listingData = {
-      id: Math.random().toString(36).substr(2, 9),
-      ownerName: formData.name,
-      phone: formData.phone,
-      treeType: formData.treeType,
-      estimatedQuantityKg: formData.quantity,
-      preferredClearanceDate: formData.date?.toISOString().split('T')[0],
+      name: formData.name,
+      phone_number: formData.phone,
+      tree_type: formData.treeType,
+      quantity: formData.quantity,
+      clearance_date: formData.date?.toISOString().split('T')[0],
       location: formData.location,
+      notes: formData.notes,
       status: "open",
-      createdAt: new Date().toISOString(),
     };
 
-    // Save locally
+    try {
+      const { error } = await supabase
+        .from('tree_listings')
+        .insert([listingData]);
+
+      if (error) throw error;
+      
+      console.log("Successfully saved to Supabase");
+
+      // Save to user profile if not already set or updated
+      const savedProfile = localStorage.getItem('fresh_user_profile');
+      if (!savedProfile) {
+        const profile = {
+          name: formData.name,
+          phone: formData.phone,
+          location: formData.location,
+          locationName: "Registered Location"
+        };
+        localStorage.setItem('fresh_user_profile', JSON.stringify(profile));
+      }
+    } catch (error) {
+      console.error("Error saving to Supabase:", error);
+      // Fallback to local storage if needed, or handle error
+    }
+
+    // Still save locally as a backup or for immediate UI updates if needed
     const existing = localStorage.getItem('fresh_local_listings');
     const listings = existing ? JSON.parse(existing) : [];
-    listings.push(listingData);
+    listings.push({ ...listingData, id: Math.random().toString(36).substr(2, 9), createdAt: new Date().toISOString() });
     localStorage.setItem('fresh_local_listings', JSON.stringify(listings));
 
     localStorage.removeItem('fresh_tree_form');
@@ -154,72 +208,11 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
           <Slider 
             value={[formData.quantity]} 
             onValueChange={([v]) => setFormData({...formData, quantity: v})}
-            max={500}
-            min={10}
-            step={10}
+            max={200}
+            min={1}
+            step={1}
             className="mt-4"
           />
-        </div>
-      </div>
-    )},
-    { title: t.preferredDate, component: (
-      <div className="space-y-4">
-        <div>
-          <Label>{t.preferredDate}</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full justify-start text-left font-normal mt-1">
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {formData.date ? format(formData.date, "PPP") : <span>Loading date...</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={formData.date || undefined}
-                onSelect={(d) => d && setFormData({...formData, date: d})}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-        <div>
-          <Label>{t.notes}</Label>
-          <Input 
-            value={formData.notes} 
-            onChange={e => setFormData({...formData, notes: e.target.value})}
-            placeholder="Tree near gate, morning harvest preferred..."
-            className="mt-1"
-          />
-        </div>
-      </div>
-    )},
-    { title: "Review", component: (
-      <div className="space-y-6">
-        <div className="p-4 bg-muted rounded-lg border border-primary/20">
-          <h3 className="font-bold flex items-center mb-2">
-            <Sparkles className="w-4 h-4 mr-2 text-primary" />
-            {t.suggestedPrice}
-          </h3>
-          {aiPrice ? (
-            <div className="space-y-2">
-              <p className="text-3xl font-headline font-bold text-primary">₹{aiPrice.suggestedPricePerKg}/kg</p>
-              <p className="text-xs text-muted-foreground">{aiPrice.reasoning}</p>
-            </div>
-          ) : (
-            <Button 
-              variant="outline" 
-              className="w-full border-dashed"
-              onClick={handlePricing}
-              disabled={isPricingLoading}
-            >
-              {isPricingLoading ? "Calculating..." : t.getPricing}
-            </Button>
-          )}
-        </div>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div><p className="text-muted-foreground">Type</p><p className="font-medium">{formData.treeType}</p></div>
-          <div><p className="text-muted-foreground">Qty</p><p className="font-medium">{formData.quantity} kg</p></div>
         </div>
       </div>
     )}
@@ -232,7 +225,7 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
       <CardHeader className="bg-primary/10">
         <div className="flex justify-between items-center">
           <CardTitle className="text-xl">Ente മാവ് register cheyyuka</CardTitle>
-          <span className="text-xs font-medium text-primary bg-primary/20 px-2 py-1 rounded-full">Step {step}/4</span>
+          <span className="text-xs font-medium text-primary bg-primary/20 px-2 py-1 rounded-full">Step {step}/2</span>
         </div>
         <CardDescription>{t.registerTreeSub}</CardDescription>
       </CardHeader>
@@ -245,7 +238,7 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
             exit={{ x: -20, opacity: 0 }}
             className="min-h-[220px]"
           >
-            {steps[step - 1].component}
+            {steps[step - 1]?.component}
           </motion.div>
         </AnimatePresence>
 
@@ -258,14 +251,14 @@ export function TreeRegistration({ language, onComplete }: { language: Language,
           <Button 
             className="flex-1 bg-accent hover:bg-accent/90 text-white" 
             onClick={() => {
-              if (step < 4) {
+              if (step < 2) {
                 setStep(step + 1);
               } else {
                 handleFinalSubmit();
               }
             }}
           >
-            {step === 4 ? t.submit : "Continue"}
+            {step === 2 ? t.submit : "Continue"}
           </Button>
         </div>
       </CardContent>
